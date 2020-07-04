@@ -15,17 +15,3 @@ replicas,MDStep Avg,Total Runtime,Task Resubmissons,Num Replica Exchanges,Accept
 168,58.03057190179825,6223.855195760727,0,47,47.0
 180,58.53183751344681,6532.798565626144,0,54,54.0
 192,58.90354291200638,6898.2355370521545,0,44,44.0
-5,12.374578094482422,152.59897899627686,0,8,80.0
-
-
-Total Run Time:                  4715.336354970932
-Total Monte Carlo Step Time:     4674.8792452812195
-Average Monte Carlo Step Time:   46.7487924528122
-Number of failures:              0
-Replica Exchanges:               46
-Acceptance Rate:                 46.0
-Total functions executed :        1200
-Average per function :            38.444776189525925
-3,6.094302225112915,47.47541809082031,0,4,80.0
-3,6.538240432739258,44.60805296897888,0,3,60.0
-3,6.057871580123901,42.0075249671936,0,5,100.0

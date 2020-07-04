@@ -747,16 +747,16 @@ if __name__ == "__main__":
     if len(args) != 6:
         print(usage_str)
         sys.exit(1)
-    pdb_file = args[0]
-    psf_file = args[1]
-    par_file = args[2]
+    pdb_file = "./../resources/%s"% args[0]
+    psf_file = "./../resources/%s"% args[1]
+    par_file = "./../resources/%s"% args[2]
     min_temp = int(args[3])
     max_temp = int(args[4])
     num_replicas = int(args[5])
 
 
     upload_data = True
-    os.environ['PYWREN_CONFIG_FILE'] = './resources/default_config.yml'
+    os.environ['PYWREN_CONFIG_FILE'] = './../resources/default_config.yml'
     with open(os.environ['PYWREN_CONFIG_FILE']) as file:
         input_config = yaml.full_load(file)
 

@@ -1,3 +1,4 @@
+replicas,MDStep Avg,Total Runtime,Task Resubmissons,Num Replica Exchanges,Acceptance Rate
 12,34.47138031005859,3454.907556772232,0,93,93.0
 24,37.3694572019577,3744.835396051407,0,98,98.0
 36,40.494744713306424,4061.7456068992615,0,98,98.0
@@ -14,31 +15,3 @@
 168,41.973343081474304,4221.677418231964,0,100,100.0
 180,41.84403202056885,4212.932698249817,0,100,100.0
 192,42.20347059965134,4246.799773693085,0,99,99.0
-
-
-
-
-
-
-
-
-
-Total functions executed :        1200
-Average per function :            28.323950517376264
-Average per function :            29.784710017707614
-Average per function :            30.01830089777708
-Average per function :            29.747468699534735
-Average per function :            30.224589363071654
-Average per function :            30.036045124644325
-Average per function :            29.465724766403437
-Average per function :            29.75951274163193
-Average per function :            29.96796502594153
-Average per function :            30.007971294901587
-Average per function :            30.0537919860416
-Average per function :            29.930463569546358
-Average per function :            29.71311340127672
-Average per function :            29.627702589352925
-Average per function :            29.727596682794392
-5,9.371858024597168,61.965081214904785,0,4,80.0
-12,
-12,7.054845380783081,56.00774383544922,0,5,100.0
