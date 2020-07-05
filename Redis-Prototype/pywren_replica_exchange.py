@@ -227,11 +227,11 @@ def cf_main(ibm_cos, bucket, replica_list, replicas_to_run):
         #Assign local and remote psf and par inputs
     target_psf_file = "%s/simfiles/input_data/ww_exteq_nowater1.psf"%(pywren_protomol.output_path)
     if upload_data:
-        cos.upload_to_remote_storage(ibm_cos, psf_file, input_config['ibm_cos']['bucket'], target_psf_file)
+        cos.upload_to_cos(ibm_cos, psf_file, input_config['ibm_cos']['bucket'], target_psf_file)
     
     target_par_file = "%s/simfiles/input_data/par_all27_prot_lipid.inp"%(pywren_protomol.output_path)
     if upload_data:
-        cos.upload_to_remote_storage(ibm_cos, par_file, input_config['ibm_cos']['bucket'], target_par_file)
+        cos.upload_to_cos(ibm_cos, par_file, input_config['ibm_cos']['bucket'], target_par_file)
 
 
     while num_replicas_completed < len(replica_list):
@@ -533,7 +533,7 @@ def make_directories(ibm_cos, bucket, output_path, temp_list, num_replicas):
     for i in temp_list:
 
         target_key = "%s/simfiles/%s/%s.%d-%d.pdb" % (output_path, i, pywren_protomol.remove_trailing_dots(pywren_protomol.parse_file_name(pdb_file)), count, 0)
-        cos.upload_to_remote_storage(ibm_cos, pdb_file, bucket, target_key)
+        cos.upload_to_cos(ibm_cos, pdb_file, bucket, target_key)
         
         count += 1
 
@@ -647,14 +647,14 @@ def serverless_task_process(task, protomol_file_template_key,time_per_function,i
     output_file_local_velocity = task.output_file_local_velocity
     #str: ww_exteq_nowater1.1-1.vel
     output_file_remote_velocity = task.output_file_remote_velocity
-    cos.upload_to_remote_storage(ibm_cos, temp_dir + '/' + output_file_remote_velocity,
+    cos.upload_to_cos(ibm_cos, temp_dir + '/' + output_file_remote_velocity,
                                  input_config['ibm_cos']['bucket'], pywren_protomol.remove_first_dots(output_file_local_velocity))
     
     #str: ./simfiles/350.0/ww_exteq_nowater1.1-1.pdb
     output_file_pdb = task.output_file_pdb
     #str: ww_exteq_nowater1.1-1.pdb
     output_file_pdb_name = task.output_file_pdb_name
-    cos.upload_to_remote_storage(ibm_cos, temp_dir + '/' + output_file_pdb_name,
+    cos.upload_to_cos(ibm_cos, temp_dir + '/' + output_file_pdb_name,
                                  input_config['ibm_cos']['bucket'], pywren_protomol.remove_first_dots(output_file_pdb))
     task.result = 0
     time_per_function = time.time() - time_per_function
@@ -779,7 +779,7 @@ if __name__ == "__main__":
     if upload_data:
         # We upload just once the pdb_file, because hasn't sense to upload it for each temperature configuration
         target_key = "/simfiles/%s/%s.pdb" % (pywren_protomol.output_path, pywren_protomol.remove_trailing_dots(pywren_protomol.parse_file_name(pdb_file)))
-        cos.upload_to_remote_storage(ibm_cos, pdb_file, bucket, target_key)
+        cos.upload_to_cos(ibm_cos, pdb_file, bucket, target_key)
 
     #Create random replica pairs to check for exchange at each step.
 

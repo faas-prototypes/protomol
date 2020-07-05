@@ -6,7 +6,7 @@ pywren:
     #rabbitmq_monitor: <True/False>
     #data_cleaner: <True/False>
     #runtime :
-    #runtime_timeout: 600000     # Default timeout
+    runtime_timeout: 15000     # Default timeout
     #runtime_memory: 256         # Default memory
     #invocation_retry: <True/False>
     #retry_sleeps: [1, 5, 10, 20, 30]

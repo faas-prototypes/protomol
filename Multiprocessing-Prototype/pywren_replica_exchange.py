@@ -6,7 +6,7 @@ import time
 import math
 import random
 import sys
-from cloudbutton.multiprocessing import pool, managers
+from cloudbutton.multiprocessing import Process, Pool, Manager
 from cloudbutton.cloud_proxy import cloud_open
 import os
 import logging
@@ -218,7 +218,7 @@ def assign_task_input_files(task, replica_list, replica_id, replica_next_startin
 
 
 # Major replica exchange and scheduling is handled here
-def cf_main(pool_client, replica_list, replicas_to_run):
+def cf_main(pool_client, shared_map,replica_list, replicas_to_run):
 
     #Stat collection variables
     global replicas_running
@@ -234,12 +234,13 @@ def cf_main(pool_client, replica_list, replicas_to_run):
         #Assign local and remote psf and par inputs
     target_psf_file = "%s/simfiles/input_data/ww_exteq_nowater1.psf"%(pywren_protomol.output_path)
     if upload_data:
-        file_utils.upload_to_remote_storage(psf_file, target_psf_file)
+        with open(psf_file,'rb') as src:
+            shared_map[target_psf_file] = src.readlines()
     
     target_par_file = "%s/simfiles/input_data/par_all27_prot_lipid.inp"%(pywren_protomol.output_path)
     if upload_data:
-        file_utils.upload_to_remote_storage(par_file, target_par_file)
-
+        with open(par_file,'rb') as src:
+            shared_map[target_par_file] = src.readlines()
 
     while num_replicas_completed < len(replica_list):
 
@@ -301,6 +302,7 @@ def cf_main(pool_client, replica_list, replicas_to_run):
                 task_dictionary = {}
                 task_dictionary['task'] = task
                 task_dictionary['time_per_function'] = 0
+                task_dictionary['map'] = shared_map
                 task_list_iterdata.append(task_dictionary)
 
                 #Submitted for execution. So mark this replica as running.
@@ -319,7 +321,6 @@ def cf_main(pool_client, replica_list, replicas_to_run):
             replicas_to_run=wait_barrier(activation_list, replica_list, replica_next_starting_step, 5)
         else:
             replicas_to_run=wait_nobarrier(activation_list, replica_list, 5)
-        activation_list = []
 
 '''The barrier version where it waits for all replicas to finish a given MC step.
    Returns all the replicas that it waited for.'''
@@ -348,15 +349,6 @@ def wait_barrier(activation_list, replica_list, monte_carlo_step, timeout):
             #Resubmit the pywren_task.
             continue
 
-        #Task was succesful. Update run information.
-        #replicas_running -= 1
-        #replica_list[replica_id].running = 0
-
-        #Get potential energy value of the completed replica run.
-        #energies_file =  "%s/simfiles/eng/%d/%d.eng" % (pywren_protomol.output_path, replica_id, replica_id)
-        #energies_stream =  ibm_cos.get_object(Bucket = bucket, Key = pywren_protomol.remove_first_dots(energies_file))['Body']._raw_stream 
-        #open(energies_file, "r")
-        #line = energies_stream.readline()
         line = task.energy_stream
         print (line)
         #print (task.energy_stream)
@@ -529,13 +521,12 @@ def attempt_replica_exch(replica_list, replica1, replica2):
 
 
 #Function to create directories to hold files from the simulations.
-def make_directories(output_path, temp_list, num_replicas):
+def make_directories(output_path, temp_list, shared_map):
     count = 0
     for i in temp_list:
-
         target_key = "%s/simfiles/%s/%s.%d-%d.pdb" % (output_path, i, pywren_protomol.remove_trailing_dots(pywren_protomol.parse_file_name(pdb_file)), count, 0)
-        file_utils.upload_to_remote_storage(pdb_file, target_key)
-        
+        with open(pdb_file, 'rb') as sourceFile:
+            shared_map[target_key] = sourceFile.readlines()
         count += 1
 
 
@@ -562,7 +553,7 @@ def create_replica_exch_pairs(replica_list, num_replicas):
         if debug_mode:
             print ("For step {}, exchange will be attempted for replica {} and {}.".format(i, replica_1, replica_2))
 
-def serverless_task_process(task, time_per_function):
+def serverless_task_process(task, time_per_function,map):
     # get input files
     # execute local script
     # upload result files
@@ -581,41 +572,35 @@ def serverless_task_process(task, time_per_function):
     localfile.close()
         #shutil.copyfileobj(res['Body'], localfile)
     print ("local exec file is {}, remote {}".format(input_local_execn_file, task.input_remote_execn_file))
-    
+
     input_local_file_pdb = pywren_protomol.remove_first_dots(task.input_local_file_pdb)
-    with cloud_open(input_local_file_pdb, 'rb') as f:
-        res = f.readlines()
+    res = shared_map[input_local_file_pdb]
     file_utils.write_file(temp_dir + '/' + task.input_remote_file_pdb, res)
 
-    
     input_par_file = pywren_protomol.remove_first_dots(task.input_par_file)
-    with cloud_open(input_par_file, 'rb') as f:
-        res = f.readlines()
+    res = shared_map[input_par_file]
     file_utils.write_file(temp_dir + '/' + task.input_par_file_name, res)
 
     input_psf_file = pywren_protomol.remove_first_dots(task.input_psf_file)
-    with cloud_open(input_psf_file, 'rb') as f:
-        res = f.readlines()
+    res = shared_map[input_psf_file]
     file_utils.write_file(temp_dir + '/' + task.input_psf_file_name, res)
 
     if (task.input_local_file_velocity is not None):
         input_vel_file = pywren_protomol.remove_first_dots(task.input_local_file_velocity)
         print (input_vel_file)
         print (task.input_remote_file_velocity)
-        with cloud_open(input_vel_file, 'rb') as f:
-            res = f.readlines()
+        res = map[input_vel_file]
         file_utils.write_file(temp_dir + '/' + task.input_remote_file_velocity, res)
 
     #bring all config files
     for conf_entry in task.input_conf_file:
         remote_config = pywren_protomol.remove_first_dots(conf_entry[1])
         local_config = conf_entry[2]
-        with cloud_open(remote_config, 'rb') as f:
-            res = f.readlines()
+        res = map[remote_config]
         print ("download config local {} remote {}".format(local_config, remote_config))
         file_utils.write_file(temp_dir + '/' + local_config, res)
 
-    
+
     import stat
     os.chmod(temp_dir + '/' + task.input_remote_execn_file, stat.S_IRUSR |
         stat.S_IWUSR |
@@ -627,34 +612,35 @@ def serverless_task_process(task, time_per_function):
     arr = os.listdir()
     print(arr)
     cmd = "./" + task.input_remote_execn_file
-    
+
     import subprocess
     subprocess.call(cmd, shell = True)
-    
+
     #str: ./simfiles/eng/1/1.eng
     output_file_local_energy = task.output_file_local_energy
     #str: 1.eng
     output_file_remote_energy = task.output_file_remote_energy
-    #cos.upload_to_cos(ibm_cos, temp_dir + '/' + output_file_remote_energy, 
+    #cos.upload_to_cos(ibm_cos, temp_dir + '/' + output_file_remote_energy,
     #              input_config['ibm_cos']['bucket'], pywren_protomol.remove_first_dots(output_file_local_energy))
     #read local energy file and update task
     energies_file =  temp_dir + '/' + output_file_remote_energy
     energies_stream =  open(energies_file, "r")
     line = energies_stream.readline()
     task.update_energy(line)
-    
+
     #str: ./simfiles/350.0/ww_exteq_nowater1.1-1.vel
     output_file_local_velocity = task.output_file_local_velocity
     #str: ww_exteq_nowater1.1-1.vel
     output_file_remote_velocity = task.output_file_remote_velocity
-    upload_to_remote_storage(temp_dir + '/' + output_file_remote_velocity,pywren_protomol.remove_first_dots(output_file_local_velocity))
+    with open(temp_dir + '/' + output_file_remote_velocity, 'rb') as sourceFile:
+        map[pywren_protomol.remove_first_dots(output_file_local_velocity)] = sourceFile.readlines()
 
     #str: ./simfiles/350.0/ww_exteq_nowater1.1-1.pdb
     output_file_pdb = task.output_file_pdb
     #str: ww_exteq_nowater1.1-1.pdb
     output_file_pdb_name = task.output_file_pdb_name
-    flo = pywren_protomol.remove_first_dots(output_file_pdb)
-    upload_to_remote_storage(temp_dir + '/' + output_file_pdb_name,flo)
+    with open(temp_dir + '/' + output_file_pdb_name, 'rb') as sourceFile:
+        map[ pywren_protomol.remove_first_dots(output_file_pdb)] = sourceFile.readlines()
 
     task.result = 0
     time_per_function = time.time() - time_per_function
@@ -745,8 +731,8 @@ if __name__ == "__main__":
     print("Clean old data from COS - start")
     file_utils.clean_remote_storage("%s/simfiles" % (pywren_protomol.output_path))
     print("Clean previous data from COS - completed")
-    pool_client = pool.Pool()
-
+    pool_client = Pool()
+    shared_map = Manager().dict()
 
     total_run_time = time.time()
     # Split up the temperature range for assigning to each replica.
@@ -786,7 +772,7 @@ if __name__ == "__main__":
 
     #Create directories for storing data from the run.
     if upload_data:
-        make_directories(pywren_protomol.output_path, temp_list, num_replicas)
+        make_directories(pywren_protomol.output_path, temp_list, shared_map)
 
     #Create random replica pairs to check for exchange at each step.
     create_replica_exch_pairs(replica_list, num_replicas)
@@ -795,9 +781,8 @@ if __name__ == "__main__":
     for i in range(pywren_protomol.monte_carlo_steps):
         for j in range(num_replicas):
             config_path = pywren_protomol.generate_config(pywren_protomol.output_path, pdb_file, psf_file, par_file, i, pywren_protomol.md_steps, pywren_protomol.output_freq, replica_list[j])
-            if upload_data:
-                file_utils.upload_to_remote_storage(config_path, config_path)
-
+            with open(config_path, 'rb') as sourceFile:
+                shared_map[config_path] = sourceFile.readlines()
     #upload rest of input files to COS
 
     replicas_to_run = []
@@ -805,7 +790,7 @@ if __name__ == "__main__":
         replicas_to_run.append(i)
 
 
-    cf_main(pool_client, replica_list, replicas_to_run)
+    cf_main(pool_client, shared_map,replica_list, replicas_to_run)
 
     #Track total run time.
     total_run_time = (time.time() - total_run_time)

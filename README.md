@@ -6,11 +6,10 @@ This project is a reimplementation of [Replica Exchange with Workqueue](https://
 
 ## Environment setup
 
-1.	Download and install [cctools library](https://cctools.readthedocs.io/en/latest/install/) for your platform.
-2.  Run ```pip install -r requirements.txt``` to download the required libraries.
-3.  Modify the resources/default_config.yml file and change its parameters to point to your IBM-Cloud configuration.
-4.  Set the PYWREN_CONFIG_FILE environment variable and point it to  resources/default_config.yml absolute path.
-5.  In the folder Redis-Prototype, modify the configuration code block placed  in `redis_connector.py` file and change these parameters to point it to your Redis.
+1.  Run ```pip install -r requirements.txt``` to download the required libraries.
+2.  Modify the resources/default_config.yml file and change its parameters to point to your IBM-Cloud configuration.
+3.  Set the PYWREN_CONFIG_FILE environment variable and point it to  resources/default_config.yml absolute path.
+4.  In the folder Redis-Prototype, modify the configuration code block placed  in `redis_connector.py` file and change these parameters to point it to your Redis.
 
 If you want to run these prototypes with the local executor provided by IBM-PyWren, you need to make available the ProtoMol file for the environment making an installing of this or referencing it through an environment variable.
 ## Run Simulation
