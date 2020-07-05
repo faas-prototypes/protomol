@@ -1,23 +1,3 @@
-#!/usr/bin/env cctools_python
-# CCTOOLS_PYTHON_VERSION 2.7 2.6
-
-# replica_exchange.py
-#
-# Copyright (C) 2011- The University of Notre Dame
-# This software is distributed under the GNU General Public License.
-# See the file COPYING for details.
-#
-# This program implements elastic replica exchange using
-# the cctools work queue framework and the Protomol molecular
-# dynamics package, as described in the following paper:
-#
-# Dinesh Rajan, Anthony Canino, Jesus A Izaguirre, and Douglas Thain,
-# "Converting a High Performance Application to an Elastic Cloud Application",
-# The 3rd IEEE International Conference on Cloud Computing Technology
-# and Science", November 2011.
-
-
-
 # Get ProtoMol related bindings from protomol_functions.
 import  pywren_protomol_functions as pywren_protomol
 
@@ -56,10 +36,7 @@ replica_id = None
 proj_name = None
 replicas_running = 0
 
-mac_temp_dir = '/Users/gilv/Dev/tmp/exec'
-cf_temp_dir = '/tmp'
-
-local_temp_dir = cf_temp_dir  
+local_temp_dir = '/tmp'
 #------------------------Stat Collection Variables------------------------------
 num_replica_exchanges = 0
 total_monte_carlo_step_time = 0
@@ -139,7 +116,7 @@ def generate_execn_script(replica_obj, replica_next_starting_step, replica_next_
 
 #Create a new WorkQueue pywren_task.
 
-def create_wq_task(replica_id, temp_dir, bucket):
+def create_task(replica_id, temp_dir, bucket):
     #Task string will be running the execution script.
     task_str = "./exec-%d.sh" % replica_id
     #Create a pywren_task using given pywren_task string for remote worker to execute.
@@ -250,11 +227,11 @@ def cf_main(ibm_cos, bucket, replica_list, replicas_to_run):
         #Assign local and remote psf and par inputs
     target_psf_file = "%s/simfiles/input_data/ww_exteq_nowater1.psf"%(pywren_protomol.output_path)
     if upload_data:
-        cos.upload_to_cos(ibm_cos, psf_file, input_config['ibm_cos']['bucket'], target_psf_file)
+        cos.upload_to_remote_storage(ibm_cos, psf_file, input_config['ibm_cos']['bucket'], target_psf_file)
     
     target_par_file = "%s/simfiles/input_data/par_all27_prot_lipid.inp"%(pywren_protomol.output_path)
     if upload_data:
-        cos.upload_to_cos(ibm_cos, par_file, input_config['ibm_cos']['bucket'], target_par_file)
+        cos.upload_to_remote_storage(ibm_cos, par_file, input_config['ibm_cos']['bucket'], target_par_file)
 
 
     while num_replicas_completed < len(replica_list):
@@ -305,7 +282,7 @@ def cf_main(ibm_cos, bucket, replica_list, replicas_to_run):
                 #replica (its output) will be brought back.
                 replica_list[j].last_seen_step = replica_next_ending_step
 
-                task = create_wq_task(replica_id, local_temp_dir, bucket)
+                task = create_task(replica_id, local_temp_dir, bucket)
                 task.specify_input_psf_file(target_psf_file, pywren_protomol.parse_file_name(psf_file))
                 task.specify_input_par_file(target_par_file, pywren_protomol.parse_file_name(par_file))
                 
@@ -337,21 +314,15 @@ def cf_main(ibm_cos, bucket, replica_list, replicas_to_run):
             replicas_running -=1
             execution_time_per_function.append(activation_list[j].function_time)
 
-
-        '''
-        for task in task_list_iterdata:
-            res = serverless_task_process(task, ibm_cos)
-            activation_list.append(res)
-        '''    
         if use_barrier:
-            replicas_to_run=wq_wait_barrier(activation_list, replica_list, bucket, replica_next_starting_step, 5)
+            replicas_to_run=wait_barrier(activation_list, replica_list, bucket, replica_next_starting_step, 5)
         else:
-            replicas_to_run=wq_wait_nobarrier(activation_list, bucket, replica_list, 5)
+            replicas_to_run=wait_nobarrier(activation_list, bucket, replica_list, 5)
         activation_list = []
 
 '''The barrier version where it waits for all replicas to finish a given MC step.
    Returns all the replicas that it waited for.'''
-def wq_wait_barrier(activation_list, replica_list, bucket, monte_carlo_step, timeout):
+def wait_barrier(activation_list, replica_list, bucket, monte_carlo_step, timeout):
 
     #Stat collection variables
     print ("wq_wait_barrier")
@@ -421,7 +392,7 @@ def wq_wait_barrier(activation_list, replica_list, bucket, monte_carlo_step, tim
    exchange partner to finish, attempts an exchange between the two, and continues
    waiting for the rest similarly.
    Returns the replica pair that finished and was attempted for an exchange.'''
-def wq_wait_nobarrier(activation_list, bucket, replica_list, timeout):
+def wait_nobarrier(activation_list, bucket, replica_list, timeout):
 
     print ("wq_wait_nobarrier")
     #Stat collection variables
@@ -562,7 +533,7 @@ def make_directories(ibm_cos, bucket, output_path, temp_list, num_replicas):
     for i in temp_list:
 
         target_key = "%s/simfiles/%s/%s.%d-%d.pdb" % (output_path, i, pywren_protomol.remove_trailing_dots(pywren_protomol.parse_file_name(pdb_file)), count, 0)
-        cos.upload_to_cos(ibm_cos, pdb_file, bucket, target_key)
+        cos.upload_to_remote_storage(ibm_cos, pdb_file, bucket, target_key)
         
         count += 1
 
@@ -676,15 +647,15 @@ def serverless_task_process(task, protomol_file_template_key,time_per_function,i
     output_file_local_velocity = task.output_file_local_velocity
     #str: ww_exteq_nowater1.1-1.vel
     output_file_remote_velocity = task.output_file_remote_velocity
-    cos.upload_to_cos(ibm_cos, temp_dir + '/' + output_file_remote_velocity, 
-                  input_config['ibm_cos']['bucket'], pywren_protomol.remove_first_dots(output_file_local_velocity))
+    cos.upload_to_remote_storage(ibm_cos, temp_dir + '/' + output_file_remote_velocity,
+                                 input_config['ibm_cos']['bucket'], pywren_protomol.remove_first_dots(output_file_local_velocity))
     
     #str: ./simfiles/350.0/ww_exteq_nowater1.1-1.pdb
     output_file_pdb = task.output_file_pdb
     #str: ww_exteq_nowater1.1-1.pdb
     output_file_pdb_name = task.output_file_pdb_name
-    cos.upload_to_cos(ibm_cos, temp_dir + '/' + output_file_pdb_name, 
-                  input_config['ibm_cos']['bucket'], pywren_protomol.remove_first_dots(output_file_pdb))
+    cos.upload_to_remote_storage(ibm_cos, temp_dir + '/' + output_file_pdb_name,
+                                 input_config['ibm_cos']['bucket'], pywren_protomol.remove_first_dots(output_file_pdb))
     task.result = 0
     time_per_function = time.time() - time_per_function
     task.specify_function_time(time_per_function)
@@ -762,7 +733,7 @@ if __name__ == "__main__":
 
     ibm_cos = cos.get_ibm_cos_client(input_config)
     print("Clean old data from COS - start")
-    cos.clean_from_cos(input_config, input_config['ibm_cos']['bucket'], 'simfiles')
+    cos.clean_remote_storage(input_config, input_config['ibm_cos']['bucket'], 'simfiles')
     print("Clean previous data from COS - completed")
 
     bucket = input_config['ibm_cos']['bucket']
@@ -808,7 +779,7 @@ if __name__ == "__main__":
     if upload_data:
         # We upload just once the pdb_file, because hasn't sense to upload it for each temperature configuration
         target_key = "/simfiles/%s/%s.pdb" % (pywren_protomol.output_path, pywren_protomol.remove_trailing_dots(pywren_protomol.parse_file_name(pdb_file)))
-        cos.upload_to_cos(ibm_cos, pdb_file, bucket, target_key)
+        cos.upload_to_remote_storage(ibm_cos, pdb_file, bucket, target_key)
 
     #Create random replica pairs to check for exchange at each step.
 
