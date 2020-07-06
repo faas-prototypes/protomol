@@ -347,15 +347,6 @@ def wait_barrier(activation_list, replica_list, bucket, monte_carlo_step, timeou
             #Resubmit the pywren_task.
             continue
 
-        #Task was succesful. Update run information.
-        #replicas_running -= 1
-        #replica_list[replica_id].running = 0
-
-        #Get potential energy value of the completed replica run.
-        #energies_file =  "%s/simfiles/eng/%d/%d.eng" % (pywren_protomol.output_path, replica_id, replica_id)
-        #energies_stream =  ibm_cos.get_object(Bucket = bucket, Key = pywren_protomol.remove_first_dots(energies_file))['Body']._raw_stream 
-        #open(energies_file, "r")
-        #line = energies_stream.readline()
         line = task.energy_stream
         print (line)
         #print (task.energy_stream)
@@ -794,12 +785,7 @@ if __name__ == "__main__":
         replicas_to_run.append(i)
 
 
-    #Start the run.
-    #wq = queue.Queue()
-    #Begin timing after parsing command line arguments.
-
     cf_main(ibm_cos, bucket, replica_list, replicas_to_run)
-
 
     #Track total run time.
     total_run_time = (time.time() - total_run_time)

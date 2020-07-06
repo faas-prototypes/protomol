@@ -647,17 +647,6 @@ def serverless_task_process(task, time_per_function,map):
     task.specify_function_time(time_per_function)
     return task
 
-
-def upload_to_remote_storage(src, target_key):
-    with open(src, 'rb') as sourceFile:
-        with cloud_open(target_key,'wb') as targetFile:
-            while 1:
-                buf = sourceFile.read(16*1024)
-                if not buf:
-                    break
-                targetFile.write(buf)
-
-
 #Main function.
 if __name__ == "__main__":
 
@@ -765,6 +754,7 @@ if __name__ == "__main__":
 
         #Initialize list for maintaining replica exchange matrix.
         replica_temp_execution_list.append([])
+        replica_temp_execution_list[x].append(replica_list[x].temp)
 
     #Add the initial temperature value to the replica exchange matrix.
     for repl in range(num_replicas):
@@ -783,8 +773,6 @@ if __name__ == "__main__":
             config_path = pywren_protomol.generate_config(pywren_protomol.output_path, pdb_file, psf_file, par_file, i, pywren_protomol.md_steps, pywren_protomol.output_freq, replica_list[j])
             with open(config_path, 'rb') as sourceFile:
                 shared_map[config_path] = sourceFile.readlines()
-    #upload rest of input files to COS
-
     replicas_to_run = []
     for i in range(num_replicas):
         replicas_to_run.append(i)
