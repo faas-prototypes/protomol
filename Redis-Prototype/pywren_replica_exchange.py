@@ -733,7 +733,7 @@ if __name__ == "__main__":
 
     ibm_cos = cos.get_ibm_cos_client(input_config)
     print("Clean old data from COS - start")
-    cos.clean_remote_storage(input_config, input_config['ibm_cos']['bucket'], 'simfiles')
+    cos.clean_from_cos(input_config, input_config['ibm_cos']['bucket'], 'simfiles')
     print("Clean previous data from COS - completed")
 
     bucket = input_config['ibm_cos']['bucket']

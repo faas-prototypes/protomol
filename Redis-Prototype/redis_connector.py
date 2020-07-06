@@ -5,7 +5,7 @@ import redis
 configuration = {
 
 	"connector": {
-		"host": "ec2-18-207-253-135.compute-1.amazonaws.com",
+		"host": "100.24.118.238",
 		"port": 6379
 
 	}
