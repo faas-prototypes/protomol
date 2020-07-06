@@ -13,7 +13,7 @@ pywren:
     #retries: 5
 
 ibm:
-    iam_api_key: 'GZ8BPKZhq2apPE0iQVSt4Rv80mQYatvTAi7p02TG-unr'
+    iam_api_key: '<API-KEY>'
 
 ibm_cf:
     endpoint    : '<FUNCTIONS_ENDPOINT>'
