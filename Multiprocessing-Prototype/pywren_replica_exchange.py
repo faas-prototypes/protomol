@@ -183,7 +183,7 @@ def assign_task_input_files(task, replica_list, replica_id, replica_next_startin
     task.specify_input_local_execn_file(local_execn_file, remote_execn_file, cache=False)
 
     #Assign local and remote pdb inputs
-    local_pdb_input_file = "%s/simfiles/%s/%s-%d.pdb" % (pywren_protomol.output_path, replica_list[replica_id].temp, exchgd_replica_pdb, replica_next_starting_step)
+    local_pdb_input_file = "/simfiles/%s/%s.pdb" % (pywren_protomol.output_path, pywren_protomol.remove_trailing_dots(pywren_protomol.parse_file_name(pdb_file)))
     remote_pdb_input_file = "%s-%d.pdb" % (replica_pdb, replica_next_starting_step)
     task.specify_input_pdb_file(local_pdb_input_file, remote_pdb_input_file, cache=False)
 
@@ -756,13 +756,13 @@ if __name__ == "__main__":
         replica_temp_execution_list.append([])
         replica_temp_execution_list[x].append(replica_list[x].temp)
 
-    #Add the initial temperature value to the replica exchange matrix.
-    for repl in range(num_replicas):
-        replica_temp_execution_list[repl].append(replica_list[repl].temp)
+
 
     #Create directories for storing data from the run.
     if upload_data:
-        make_directories(pywren_protomol.output_path, temp_list, shared_map)
+        target_key = "/simfiles/%s/%s.pdb" % (pywren_protomol.output_path, pywren_protomol.remove_trailing_dots(pywren_protomol.parse_file_name(pdb_file)))
+        with open(pdb_file,'rb') as src:
+            shared_map[target_key] = src.readlines()
 
     #Create random replica pairs to check for exchange at each step.
     create_replica_exch_pairs(replica_list, num_replicas)
