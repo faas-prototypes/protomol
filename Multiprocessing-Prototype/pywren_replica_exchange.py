@@ -7,7 +7,6 @@ import math
 import random
 import sys
 from cloudbutton.multiprocessing import Process, Pool, Manager
-from cloudbutton.cloud_proxy import cloud_open
 import os
 import logging
 import getopt
@@ -327,7 +326,7 @@ def cf_main(pool_client, shared_map,replica_list, replicas_to_run):
 def wait_barrier(activation_list, replica_list, monte_carlo_step, timeout):
 
     #Stat collection variables
-    print ("wq_wait_barrier")
+    print ("wait_barrier")
     global step_time
     global num_task_resubmissions
     global total_monte_carlo_step_time
@@ -393,14 +392,14 @@ def wait_nobarrier(activation_list, replica_list):
     global replicas_running
 
     #Wait for a pywren_task to finish execution.
-    print ("wq_wait_nobarrier {}".format(len(activation_list)))
+    print ("wait_nobarrier {}".format(len(activation_list)))
     for task in activation_list:
         #pywren_task = res.get_result()
-        print ("wq_wait_nobarrier. got task {}".format(task.task_str))
+        print ("wait_nobarrier. got task {}".format(task.task_str))
         if (task):
             #Get replica id from finished pywren_task.
             replica_id = int(task.tag)
-            print ("wq_wait_nobarrier. task id {}".format(replica_id))
+            print ("wait_nobarrier. task id {}".format(replica_id))
 
             #Check if pywren_task (replica) failed. If so, resubmit.
             if task.result != 0:
@@ -408,13 +407,7 @@ def wait_nobarrier(activation_list, replica_list):
                 print ("Replica failed!")
                 #time.sleep(3)
 
-                #Resubmit the pywren_task.
-                #wq.submit(pywren_task)
                 continue
-
-            #Task was succesful. Update run information.
-            #replicas_running -= 1
-            #replica_list[replica_id].running = 0
 
             #Get potential energy value of the completed replica run.
             energies_file =  "%s/simfiles/eng/%d/%d.eng" % (pywren_protomol.output_path, replica_id, replica_id)

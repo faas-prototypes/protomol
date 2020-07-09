@@ -6,7 +6,7 @@ import os
 
 
 #-------------------------------Constants-----------------------------------
-DEFAULT_MONTE_CARLO_STEPS = 10
+DEFAULT_MONTE_CARLO_STEPS = 5
 DEFAULT_OUTPUT_PATH = os.getcwd()
 DEFAULT_MDSTEPS = 100
 DEFAULT_BOUNDARY_CONDITIONS = "Vacuum"
