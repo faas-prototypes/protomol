@@ -1,0 +1,2 @@
+replicas,MDStep Avg,Total Runtime,Task Resubmissons,Num Replica Exchanges,Acceptance Rate
+5,5.33270583152771,43.00129508972168,0,4,80.0
