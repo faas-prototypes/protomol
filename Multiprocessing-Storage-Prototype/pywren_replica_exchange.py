@@ -568,18 +568,18 @@ def serverless_task_process(task, time_per_function):
     input_local_file_pdb = pywren_protomol.remove_first_dots(task.input_local_file_pdb)
     with cloud_open(input_local_file_pdb, 'rb') as f:
         res = f.readlines()
-    file_utils.write_file(temp_dir + '/' + task.input_remote_file_pdb, res)
+    file_utils.write_file_locally(temp_dir + '/' + task.input_remote_file_pdb, res)
 
 
     input_par_file = pywren_protomol.remove_first_dots(task.input_par_file)
     with cloud_open(input_par_file, 'rb') as f:
         res = f.readlines()
-    file_utils.write_file(temp_dir + '/' + task.input_par_file_name, res)
+    file_utils.write_file_locally(temp_dir + '/' + task.input_par_file_name, res)
 
     input_psf_file = pywren_protomol.remove_first_dots(task.input_psf_file)
     with cloud_open(input_psf_file, 'rb') as f:
         res = f.readlines()
-    file_utils.write_file(temp_dir + '/' + task.input_psf_file_name, res)
+    file_utils.write_file_locally(temp_dir + '/' + task.input_psf_file_name, res)
 
     if (task.input_local_file_velocity is not None):
         input_vel_file = pywren_protomol.remove_first_dots(task.input_local_file_velocity)
@@ -587,7 +587,7 @@ def serverless_task_process(task, time_per_function):
         print (task.input_remote_file_velocity)
         with cloud_open(input_vel_file, 'rb') as f:
             res = f.readlines()
-        file_utils.write_file(temp_dir + '/' + task.input_remote_file_velocity, res)
+        file_utils.write_file_locally(temp_dir + '/' + task.input_remote_file_velocity, res)
 
     #bring all config files
     for conf_entry in task.input_conf_file:
@@ -596,7 +596,7 @@ def serverless_task_process(task, time_per_function):
         with cloud_open(remote_config, 'rb') as f:
             res = f.readlines()
         print ("download config local {} remote {}".format(local_config, remote_config))
-        file_utils.write_file(temp_dir + '/' + local_config, res)
+        file_utils.write_file_locally(temp_dir + '/' + local_config, res)
 
 
     import stat

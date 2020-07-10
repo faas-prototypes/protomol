@@ -568,22 +568,22 @@ def serverless_task_process(task, time_per_function,map):
 
     input_local_file_pdb = pywren_protomol.remove_first_dots(task.input_local_file_pdb)
     res = shared_map[input_local_file_pdb]
-    file_utils.write_file(temp_dir + '/' + task.input_remote_file_pdb, res)
+    file_utils.write_file_locally(temp_dir + '/' + task.input_remote_file_pdb, res)
 
     input_par_file = pywren_protomol.remove_first_dots(task.input_par_file)
     res = shared_map[input_par_file]
-    file_utils.write_file(temp_dir + '/' + task.input_par_file_name, res)
+    file_utils.write_file_locally(temp_dir + '/' + task.input_par_file_name, res)
 
     input_psf_file = pywren_protomol.remove_first_dots(task.input_psf_file)
     res = shared_map[input_psf_file]
-    file_utils.write_file(temp_dir + '/' + task.input_psf_file_name, res)
+    file_utils.write_file_locally(temp_dir + '/' + task.input_psf_file_name, res)
 
     if (task.input_local_file_velocity is not None):
         input_vel_file = pywren_protomol.remove_first_dots(task.input_local_file_velocity)
         print (input_vel_file)
         print (task.input_remote_file_velocity)
         res = map[input_vel_file]
-        file_utils.write_file(temp_dir + '/' + task.input_remote_file_velocity, res)
+        file_utils.write_file_locally(temp_dir + '/' + task.input_remote_file_velocity, res)
 
     #bring all config files
     for conf_entry in task.input_conf_file:
@@ -591,7 +591,7 @@ def serverless_task_process(task, time_per_function,map):
         local_config = conf_entry[2]
         res = map[remote_config]
         print ("download config local {} remote {}".format(local_config, remote_config))
-        file_utils.write_file(temp_dir + '/' + local_config, res)
+        file_utils.write_file_locally(temp_dir + '/' + local_config, res)
 
 
     import stat

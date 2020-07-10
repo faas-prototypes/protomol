@@ -23,7 +23,7 @@ def read_from_remote_storage(filename):
         lines = f.readlines()
     return lines
 
-def write_file(dir,content):
+def write_file_locally(dir, content):
     with open(dir, 'wb') as localfile:
             localfile.writelines(content)
 
