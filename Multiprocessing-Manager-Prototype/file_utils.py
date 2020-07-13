@@ -10,11 +10,7 @@ def upload_to_remote_storage(src, target_key):
     logger.info('Copying from {} to {}'.format(src, target_key))
     with open(src, 'rb') as sourceFile:
         with cloud_open(target_key,'wb') as targetFile:
-            while 1:
-                buf = sourceFile.read(16*1024)
-                if not buf:
-                    break
-                targetFile.write(buf)
+            targetFile.writelines(sourceFile.readlines())
 
     logger.info('Copy completed for {}'.format(target_key))
 
