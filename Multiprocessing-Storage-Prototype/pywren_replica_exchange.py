@@ -646,13 +646,9 @@ def serverless_task_process(task, time_per_function):
 
 
 def upload_to_remote_storage(src, target_key):
-    with open(src, 'rb') as sourceFile:
-        with cloud_open(target_key,'wb') as targetFile:
-            while 1:
-                buf = sourceFile.read(16*1024)
-                if not buf:
-                    break
-                targetFile.write(buf)
+        copied_file = open(src, 'rb').read()
+        with cloud_open(target_key, 'wb') as targetFile:
+            targetFile.write(copied_file)
 
 
 #Main function.

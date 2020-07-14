@@ -1,4 +1,5 @@
 import logging
+import cloudbutton.cloud_proxy as proxy
 from cloudbutton.cloud_proxy import os as cloud_os
 from cloudbutton.cloud_proxy import open as cloud_open
 
@@ -8,9 +9,9 @@ logger = logging.getLogger('pywren-protomol')
 def upload_to_remote_storage(src, target_key):
 
     logger.info('Copying from {} to {}'.format(src, target_key))
-    with open(src, 'rb') as sourceFile:
-        with cloud_open(target_key,'wb') as targetFile:
-              targetFile.writelines(sourceFile.readlines())
+    copied_file = open(src,'rb').read()
+    with cloud_open(target_key,'wb') as targetFile:
+          targetFile.write(copied_file)
 
     logger.info('Copy completed for {}'.format(target_key))
 
