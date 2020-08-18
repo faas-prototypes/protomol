@@ -1,0 +1,488 @@
+%% Wosc6 Submission
+\documentclass[sigplan, screen]{acmart}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{pgfplots}
+\usepackage{listings}
+\usepackage{color}
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\tiny,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=none,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    \normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
+
+\copyrightyear{2020}
+\acmYear{2020}
+\setcopyright{acmcopyright}
+\acmConference[WOSC '20]{6th Workshop on Serverless Computing}{XXXX XX--XX, 2020}{XXXX, XXXX}
+\acmBooktitle{6th Workshop on Serverless Computing (WOSC '20), XXXX XX--XX, 2020, XXXX, XXXX}
+\acmPrice{15.00}
+\acmDOI{10.1145/nnnnnnnn.nnnnnnn}
+\acmISBN{978-x-xxxx-xxxx-x/YY/MM}
+
+%%
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+%%
+%% The "title" command has an optional parameter,
+%% allowing the author to define a "short title" to be used in page headers.
+\title{Moving Embarrassing Parallel Algorithms to the Cloud through FaaS architectures}
+
+\author{Pedro Garc\'{i}a-L\'{o}pez}
+\affiliation{%
+  \institution{Universitat Rovira i Virgili}
+  \institution{IBM T.J. Watson Research Center}
+  \city{Yorktown Heights}
+  \state{NY}
+  \country{USA}}
+\email{pedro.garcia.lopez@ibm.com}
+
+\author{Mariano Ezequiel Mirabelli}
+\affiliation{%
+  \institution{Universitat Rovira i Virgili}
+  \city{Buenos Aires}
+  \country{Argentina}}
+\email{mmirabelli@uoc.edu}
+
+
+%%
+%% By default, the full list of authors will be used in the page
+%% headers. Often, this list is too long, and will overlap
+%% other information printed in the page headers. This command allows
+%% the author to define a more concise list
+%% of authors' names for this purpose.
+\renewcommand{\shortauthors}{J. Doe, et al.}
+
+\begin{abstract}
+ Although nowadays cloud computing is widely adopted to build performant and scalable solutions to a large amount of domains, the access to this model remains distant for some groups of scientists and engineers who could feel overwhelmed due to the steep learning curve that this computing model represents for them. With the goal to flatten this curve and democratize the access to the cloud computing environments, a large variety of frameworks and tools have been emerging for the last few years. In this context, we propose the FaaS computing architectures as an alternative to bring the cloud computing closer to inexperienced users who want to develop embarrassing parallel algorithms taking full advantage of the benefits offered by the cloud models.\\
+ Throughout  this paper, we demonstrate how a FaaS implementation of the replica exchange algorithm shows a better performance in comparison with Work Queue replica exchange implementation. Also, we present how through FaaS it is possible to obtain an application with the capacity of scaling dynamically and transparently, at the same time it allows reduction of the cost of the solution for some scenarios. Additionally, we demonstrate how it is possible to build a cloud provider agnostic implementation, promoting the development of applications capable of managing the access to remote resources, making use of well known APIs and in the same way as local resources are managed.
+
+\end{abstract}
+
+\keywords{Serverless,  }
+
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+Traditionally, the HPC clusters and its frameworks have been the mechanism adopted by engineers and scientists to solve problems when embracing parallel tasks is required. However, these kinds of solutions require application owners to deal with complex concepts such as; multithreading programming and distributed memory architectures. In addition to this, the HPC clusters have limited resources. Thus, the scalability of the applications running is limited to the cluster capacity. Additionally, some HPC traditional technologies, such as MPI,  offer a low level abstraction to its users, making them responsible for dealing with transport layer logic as well as the implementation of fault tolerance mechanisms. Therefore, this means more complex applications with more responsibility, and more lines of code to test and maintain.\\
+In order to overcome these limitations, the idea of moving from HPC to Cloud environments has been consolidating with the growth of this paradigm for the last few years. This is due to the inherent capacities of the cloud  environment to offer unlimited resources which allows the development of elastic applications. Nevertheless, the cloud computing paradigm brings with it a set of new challenges to face. From the users’ perspective, the adoption of the cloud computing model means a steep learning curve. This is based on the new concepts that users need to incorporate to take full advantage of it, in terms of: cloud environments management, pricing schemes, the large variety of providers available in the market, and the services offered for each of them. Additionally in order to achieve the development of cloud portables, dynamic scalable and resilient applications, the users need to learn a large amount of APIs and services that allow them to reach these characteristics successfully.\\
+With the aim to facilitate the migration from HPC to cloud computing model, new tools and frameworks have been in development for the last few years. Following this line, the Notre Dame University research team developed the Work Queue framework which is defined as "a flexible master/worker framework for constructing large scale scientific ensemble applications that span many machines including clusters, grids, and clouds"[reference]. Although Work Queue represents a big step in the movement from the HPC to the cloud, due to the fact that it offers some interesting features such as portability and fault tolerance mechanism, this still exposes some limitations. One of them is based on the absence of transparency scaling. Due to the fact that it requires adding more CPU cores or virtual instances manually, conforming more Work Queue workers is required.  Additionally, this framework lacks replication transparency, because the users need to add/remove manually the number of Work Queue workers running according to the size of the problem faced. Also, Work Queue showed some performance degradation produced by the communication and data transfers overhead between masters and workers that are running remotely and the recovery from failures mechanism inherent to the framework [reference]\\
+With the goal to extend the benefits achieved with Work Queue framework, we propose moving the original Work Queue Replica Exchange algorithm to a Function as a Service computing model in order to improve the algorithm performance and achieve a solution capable of scaling transparently as well as offering access to remote resources transparently too. To demonstrate this, we developed three FaaS prototypes based on: IBM Cloud Object Storage(COS), Local Dictionary data structure and Redis database, which are integrated with IBM Cloud Functions through the IBM-PyWren framework. In the section ‘FaaS Prototypes’ of this paper, we describe the architecture details of each prototype and we make an analysis about the strengths and weaknesses of each one. Then, in section Work Queue vs FaaS Prototypes, we present a study comparing the results obtained after to execute the original Work Queue code against our prototypes in the IBM Cloud environment. We make an analysis from different angles, taking into account performance, elasticity and pricing of each solution. Additionally, in order to make an analysis from the point of view of the access transparency, in the section Moving Towards Simplicity  we present a refactor of our Redis and COS prototypes making use of Multiprocessing API framework[reference]. Finally, we conclude the paper with a discussion of related work, and consider possible avenues for future research.
+
+\section{FaaS Prototypes}
+
+The FaaS prototypes are implemented with Python language and make use of the IBM-PyWren framework[reference]. Due to the fact that this version of the replica exchange algorithm uses the ProtoMol framework[reference] to simulate the molecular dynamics, and makes use of the Monte Carlo method, the source code includes embedded calls to the framework which also requires a configuration file for each invocation to work correctly. Due to the fact that a Monte Carlo simulation is composed of a set of steps and each step is composed of a set of replicas, we need NxM ProtoMol calls, where N represents the replicas and M represents the steps. Thus the same amount of configuration files is needed.\\
+Due to the stateless nature of the serverless functions, it is required to make use of an external storage in order to implement the replica exchange as a serverless solution. In this context, we developed three FaaS prototypes varying in each case the storage used to save the required configuration files.
+
+\vspace{2mm}
+\noindent
+\textbf{COS  Prototype:} In this prototype, we put the configuration files in an IBM Cloud Object Storage bucket. The main advantages of this approach is the elasticity and the on demand use of the computational resources. The original solution could be executed over clusters, grids or indeed in the cloud. However, previous resources should be reserved mandatorily to reach a correct deployment and although Work Queue allows the growth and shift of their workers on demand, the underlying resources are not elastic. With the serverless approach, it is possible to invoke many of the serverless functions as we need and it does not need any base infrastructure such as cloud instances or dedicated servers. Also, the use of Cloud Object Storage Service, allows unlimited data storage for the configuration files and it ensures a high availability, between 99.95% and  99.99%.[reference IBM doc]
+On the other hand, one of the weaknesses that we found along this code is the massive use of  IBM Cloud Object Storage. Although it ensures high availability,  this kind of storage is not a fast storage. Object Storages exhibit high access costs and high access latencies due to the fact that they are not volatile storages, instead, they are implemented as on-disk based solutions. As a consequence of this, these storages are inadequate for fine grained operations where numerous read/write operations are involved[reference Rise Serverless article]
+
+\vspace{2mm}
+\noindent
+\textbf{Local Dictionary Prototype:} As presented above, the main weakness of the COS prototype is the performance due to the large amount of reading and writing operations against the object storage bucket. Actually, the major bottleneck happens when the simulation program starts to run. This is because before starting to run each Monte Carlo step, many ProtoMol configuration files as replicas are uploaded to the cloud object storage. Then, when each serverless function is invoked, it retrieves its associated file from the bucket. With the idea to address this situation, we introduced a local dictionary Python data structure  instead of  an Object Storage. With it, we added a faster memory data structure which manages read/write operations with O(1) complexity. Also, through this implementation, we avoided the network latency time required to access the cloud object storage. As a counterpart, we faced a new challenge, because with the replacement of the cloud bucket by the local dictionary, we lost the cloud storage where the serverless functions could retrieve the needed files. To manage this situation, we modified the functions executed by the  IBM-PyWren executor, adding the associated file as a parameter for each serverless function.\\
+Although this prototype improves the performance in comparison with COS, the main disadvantage of this approach is its limited scalability. It happens because the local dictionary is limited to the resources available in the machine where the simulation is running. Also, if the instance where the main program is running goes down, the dictionary data will also be lost.
+
+\vspace{2mm}
+\noindent
+\textbf{Redis Prototype:} With the idea to keep a faster memory data structure without sacrificing availability and scalability, we developed a third implementation of IBM-PyWren with ProtoMol using Redis database [reference]. From a code point of view, the changes involved in this implementation are based on two conditions. The first condition is that we return to the original scheme where we upload the ProtoMol configurations files as the COS Prototype does, but in this scenario, the uploading is against Redis instead of IBM Object Storage. Thus,  each serverless function retrieves its corresponding file from Redis too.
+Besides the replacement of the local dictionary by Redis, we refactored the ProtoMol configuration files generation. In the remaining prototypes, each file is generated as a string concatenation and then a new file is created and saved inside a folder within the project structure. Then, these files are read and uploaded to the IBM bucket. However, with the idea to reduce the writing to disk in the main function of the  simulation code,  we replaced the disk operations with memory operations, substituting the configuration files with dictionaries with the corresponding attributes. As a result of this, the content of Redis is now ordered dictionaries with the properties needed to generate the corresponding configuration file in the related serverless function but not in the main code.
+As a disadvantage, the Redis prototype requires factoring in an extra cost for the Redis server. In this case, we did not use a Redis Service provided by a cloud solution, instead we configured our redis inside an instance of the cloud provider. As a consequence, it is cheaper than hiring a service but it implies more complexity to configure security policies, access and database scalability where necessary. Additionally, in terms of code complexity, the integration with Redis database means learning, installing and integrating a new Python library, which means more code to test and maintain.  Finally, this prototype could be slower than the local dictionary prototype if the Redis instance is not sharing the same availability zone as serverless functions and the main program that launches these.
+
+
+\label{sec:faas prototypes}
+
+\section{Work Queue vs FaaS Prototypes}
+\vspace{2mm}
+\subsection{Experiment Setup}
+In order to compare the FaaS prototypes against the original Work Queue project, we executed all these implementations over IBM Cloud Environment following the  experiment developed in Converting A High Performance Application to an Elastic Cloud Application paper [reference]. This experiment consists of running the Monte Carlo simulation varying the number of replicas for each new execution. Therefore, we took 12 replicas as our starting point and we added 12 replicas for each repetition until we reached the 192 replicas which represent our last execution. Additionally, we defined 100 steps for each Monte Carlo execution and we configured 300 and 400 as our minimal and maximum temperatures for the molecular dynamic process. In tables 1 and 2 we can observe this in detail as well as the remaining values configured
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ | l | p{3cm} |}
+        \hline
+         \multicolumn{2}{|c|}{Replicas Variation} \\
+         \hline
+         \hline
+             Initial Number of Replicas & 12 \\
+             Replicas Delta & 12 \\
+             Ending Number of Replicas & 192 \\
+         \hline
+    \end{tabular}
+    \caption{Replicas variation}
+    \label{table:1}
+    \vspace{-9mm}
+\end{table}
+
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ | l | p{3cm} | }
+        \hline
+            \multicolumn{2}{|c|}{Replicas Variation} \\
+         \hline
+         \hline
+             Default Monte Carlo Steps & 100 \\
+             Default MD Steps & 10000 \\
+             Default Boundary Conditions & Vacuum \\
+             Default Output Frequency & 10000 \\
+             Default Physical Temperature & 300 \\
+             Minimum Temperature & 300 \\
+             Maximum Temperature & 400 \\
+         \hline
+    \end{tabular}
+    \caption{Replica exchange algorithm configuration}
+    \label{table:2}
+    \vspace{-4mm}
+\end{table}
+
+
+On the other hand, to execute the Work Queue project as well as the FaaS prototypes, it is mandatory to create a virtual server to deploy the master program which in the case of FaaS prototypes is responsible for launching serverless functions and, for Work Queue, it is responsible for submitting tasks to the queue. Therefore, we configured a virtual server with the specification detailed in the table 3
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ | l | p{3cm} |}
+        \hline
+         \multicolumn{2}{|c|}{IBM Master Virtual Server Attributes} \\
+        \hline
+        \hline
+             IBM Flavour & C1.4X4 \\
+             Virtual CPUs & 4 \\
+             Memory in GB & 4 \\
+             Network Bandwidth(Mbps) & Up to 1000 \\
+             Region & US-East \\
+        \hline
+    \end{tabular}
+    \caption{IBM Cloud Master Resources}
+    \label{table:3}
+    \vspace{-4mm}
+\end{table}
+
+For the Work Queue implementation execution, it is required to create a servers cluster. This is because the master program is responsible for creating a Work Queue queue and putting the tasks there, while the remaining nodes in the cluster will be the place where the Work Queue workers will run and it will take the pending tasks in the queue to execute these. Taking into account that the number of replicas varies for each repetition, as we increase this number it is necessary to add new workers too. This is because the idea is to keep the same number of replicas as workers. In addition to this; for each Work Queue worker, a CPU core is needed. Therefore, the number of nodes in the cluster that need to be incremented through the number of replicas grows too. Based on the fact that the instances chosen to mount the cluster have 16 CPU cores and due to the fact that the maximum number of replicas is 192, a cluster of 12 nodes is needed to execute the maximum replicas number required by the experiment. In table 4 we observe technical details about these instances
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ | l | p{3cm} |}
+        \hline
+             \multicolumn{2}{|c|}{IBM Work Queue Nodes Virtual Server Attributes} \\
+         \hline
+         \hline
+             IBM Flavour & C1.16X16 \\
+             Virtual CPUs & 16 \\
+             Memory in GB & 16 \\
+             Network Bandwidth(Mbps) & Up to 1000 \\
+             Region & US-East \\
+         \hline
+    \end{tabular}
+    \caption{BM Cloud Node Instance Resources}
+    \label{table:4}
+    \vspace{-4mm}
+\end{table}
+
+On the other hand, to configure the severless execution environment required by the FaaS prototypes, we created a bucket in IBM Object Storage as well as an IBM Cloud Functions Namespace. Both resources were located in the IBM US-East  Washington DC Region. Additionally, we needed to install an extra instance to host the Redis Database which is required by the correct execution of the Redis Prototype. The flavour and the characteristics of this instance are detailed in Table 5
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ | l | p{3cm} |}
+        \hline
+             \multicolumn{2}{|c|}{IBM Work Queue Nodes Virtual Server Attributes} \\
+         \hline
+         \hline
+             IBM Flavour & M1.2X16 \\
+             Virtual CPUs & 2 \\
+             Memory in GB & 16 \\
+             Network Bandwidth(Mbps) & Up to 1000 \\
+             Region & US-East \\
+         \hline
+    \end{tabular}
+    \caption{BM Cloud Node Instance Resources}
+    \label{table:4}
+    \vspace{-4mm}
+\end{table}
+
+Finally, we configure the IBM-PyWren framework with 2048 MB of memory, which guarantees 1 vCPU for each function launched in the IBM Cloud Namespace ensuring the same conditions occurred as Work Queue implementation.
+
+\subsection{Results Obtained}
+\vspace{2mm}
+\subsubsection{Performance Analysis}
+As we can observe in figure 1, the Work Queue implementation is slowest in comparison with the IBM-PyWren prototypes. The reason behind this behaviour arises from  the communication and data transfer overheads between the master and workers that occur in the Work Queue implementation. This happens because each task triggered by the master needs to upload the corresponding files to the nodes to make it available for them. In addition, the output files are pushed back from the nodes to the masters when a task finalizes its execution. Thus, according to the fact that the number of replicas increases, the number of tasks triggered increases too and it generates an increment in the file exchanges, producing the growth in the total execution time of the Monte Carlo simulation.\\
+Additionally, analyzing the FaaS prototypes results, we can observe that the IBM COS Prototype is slowest in comparison with the other solutions. This is due to the limitation demonstrated by the object storages which are not designed for numerous read/write operations over small files. In addition to this, the Object Storages are on-disk based storages, which are slower than in-memory based storages such as Redis. On the other hand, the Local Dictionary Prototype and Redis Prototype show similar results because both prototypes are based on in-memory storages. Despite the fact that one of them is a local structure and the other is remote, from the performance point of view there are no differences because the network latency is depreciable when the resources are connected to a width band network and are deployed inside the same Region (US-East for this case).\\
+Also, in figure 2 we can observe how the function average execution time at COS Prototype is greater than the average execution time in the remaining IBM-PyWren prototypes. Therefore, we can figure out that Local Map and Redis prototypes not only improve the general execution time, avoiding the uploading of a lot of configuration files into IBM COS buckets to prepare the Monte Carlo execution, but it can also reach a better performance, avoiding some bucket calls during the function execution.
+
+\vspace{2mm}
+
+\pgfplotsset{compat=1.14}
+\begin{filecontents}{replica-ex.dat}
+X Replicas    WQ            COS         MAP         REDIS
+1  12         96.275        82.068      62.556      57.581
+2  24         119.076       90.988      67.623      62.413
+3  36         135.853       90.134      67.555      67.695
+4  48         163.150       93.343      69.132      68.371
+5  60         166.652       94.785      69.330      68.009
+6  72         166.083       95.269      69.851      68.964
+7  84         168.645       98.517      71.172      68.635
+8  96         166.075       103.294     70.782      68.603
+9  108        165.023       101.169     70.883      69.846
+10 120        169.035       104.647     71.565      70.693
+11 132        167.080       103.869     71.410      70.190
+12 144        167.677       104.655     71.574      70.297
+13 156        170.567       102.865     72.323      70.466
+14 168        170.585       103.730     71.110      70.361
+15 180        170.330       108.879     70.799      70.215
+16 192        169.578       114.970     70.799      70.779
+
+\end{filecontents}
+\begin{tikzpicture}
+    \begin{axis}[
+        axis lines=left,
+        xlabel=Number of Replicas,
+        ylabel=Execution time in minutes,
+        xticklabel style = {rotate=30},
+        xticklabels from table={replica-ex.dat}{Replicas},xtick=data,
+        legend columns=2,
+        legend style={at={(0.5,-0.3)},anchor=north}
+    ]
+    \addplot[red,thick,mark=square*] table [y=WQ,x=X]{replica-ex.dat};
+    \addplot[blue,thick,mark=square*] table [y=COS,x=X]{replica-ex.dat};
+    \addplot[green,thick,mark=square*] table [y=MAP,x=X]{replica-ex.dat};
+    \addplot[orange,thick,mark=square*] table [y=REDIS,x=X]{replica-ex.dat};
+    \addlegendentry{Work Queue}
+    \addlegendentry{COS Prototype}
+    \addlegendentry{Local Map Prototype}
+    \addlegendentry{Redis Prototype}
+    \end{axis}
+\end{tikzpicture}
+
+
+\pgfplotsset{compat=1.14}
+\begin{figure}
+\begin{tikzpicture}
+\begin{axis}[
+    ybar,
+    enlargelimits=0.15,
+    legend style={at={(0.5,-0.15)},
+      anchor=north,legend columns=-1},
+    ylabel=Average Execution Time in Minutes,
+    symbolic x coords={COS,Local Map,Redis},
+    xtick=data,
+    nodes near coords,
+    nodes near coords align={vertical},
+    ]
+\addplot coordinates {(COS,38) (Local Map,31) (Redis,30)};
+\end{axis}
+\end{tikzpicture}
+\caption{\textit{\textbf{IBM-PyWren Prototypes Average Execution Time}}}
+\end{figure}
+
+\subsubsection{Cost Analysis}
+As we can observe from figure number 3, COS Prototype is the most expensive implementation followed by Work Queue, then by Local Map Prototype, and the last is the Redis Prototype. The reason why COS Prototype is the most expensive is the average function execution time and the IBM Cloud Functions price scheme. In this case the operations against IBM COS Buckets do not have any influence in the final price. Indeed, we depreciate the COS operations in this analysis, because the magnitude order of the price is approximately 0.5 american dollars for GET operations and 1.6 american dollars for PUT operations for each FaaS prototype.\\
+On the other hand, the Redis prototype is cheaper due to the fact that the average execution time of the serverless functions is less than the average execution time of the remaining prototypes. As we observe in Table 6, the IBM functions pricing schema  is calculated per execution second per GB of memory  assigned. Therefore, if we estimate the total price of executing all functions for each prototype with the help of the IBM Functions Cost Estimator[reference], we observe that Redis Prototype holds the lowest total cost in terms of functions executions. Thus, despite this prototype having an extra cost related with the requirement to configure an extra virtual server to host the Redis database, it maintains the cheaper total cost by holding the functions lower average execution time.
+
+
+\pgfplotsset{compat=1.14}
+\begin{figure}
+\begin{tikzpicture}
+\begin{axis}[
+    ybar,
+    enlargelimits=0.15,
+    legend style={at={(0.5,-0.15)},
+      anchor=north,legend columns=-1},
+    ylabel=Total Cost in Dollars,
+    symbolic x coords={Work Queue, COS,Local Map,Redis},
+    xtick=data,
+    nodes near coords,
+    nodes near coords align={vertical},
+    ]
+\addplot coordinates {(Work Queue,196.57) (COS,218.94) (Local Map,175.73) (Redis,173.38)};
+\end{axis}
+\end{tikzpicture}
+\caption{\textit{\textbf{FaaS vs Work Queue Cost Comparison}}}
+\end{figure}
+
+
+\vspace{-0.5mm}
+\subsubsection{Elasticity Analysis}
+We can figure out that every FaaS prototype is more elastic and transparent for final users than Work Queue. In this scheme, for each worker available, a vCPU is needed to allocate it and allow it to work correctly. Thus, as we did along this experiment, it is mandatory to add more CPU capacity to increase the number of workers available. This can be  reached adding new virtual servers or modifying the flavour of these by a flavour with more cores. However, although it is possible, it is not transparent for the final users, because they are required to manage the underlying infrastructure where the program will be executed before running it. Although it is possible to reach an elastic scalability with the help of technologies such as Kubernetes or Auto Scaling Groups where the scalability policies are configured based on CPU resources, it makes the solution more complex and it would break the premise of keeping the implementation easy for final users.
+On the other hand, we observed that FaaS prototypes scale dynamically according to the needs and it allows us to reach the maximum parallelism degree without any extra configuration and making use of only one master node to run the code with different replicas.
+
+\section{Moving Towards Simplicity}
+Although FaaS prototypes have demonstrated improvements in terms of performance, elasticity and pricing in comparison with Work Queue, these implementations still require a steep learning curve in order to manage different APIs and concepts needed to implement replica exchange as a FaaS application. Additionally, although IBM-PyWren abstracts us from the IBM SDK, and this has the capacity to integrate with other serverless platforms through different plugins, it still demands an extra complexity to learn a new framework and how it works if we want to take advantage of it.\\
+In order to facilitate the development of the replica exchange algorithm as a FaaS application and to obtain a multicloud solution following the principle of access transparency, we refactored the COS and Redis prototypes making use of the Multiprocessing API framework[reference].\\
+
+\subsection{Managing object storage}
+This code block presents the function responsible for the object storage cleaning at the beginning of each execution.
+
+\vspace{2mm}
+\noindent
+\textbf{COS  Prototype}
+\lstset{style=mystyle}
+\begin{lstlisting}[language=Python]
+def clean_from_cos(config, bucket, prefix):
+
+  cos_client = get_ibm_cos_client(config)
+  objs = cos_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+  while 'Contents' in objs:
+   keys = [obj['Key'] for obj in objs['Contents']]
+   formatted_keys = {'Objects': [{'Key': key} for key in keys]}
+   cos_client.delete_objects(Bucket=bucket, Delete=formatted_keys)
+   objs = cos_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+\end{lstlisting}
+
+\noindent
+\textbf{Multiprocessing API  Prototype}
+\lstset{style=mystyle}
+\begin{lstlisting}[language=Python]
+from cloudbutton.cloud_proxy import os as cloud_os
+from cloudbutton.cloud_proxy import open as cloud_open
+
+def clean_remote_storage(prefix):
+    for root, dirs, files in cloud_os.walk(prefix, topdown=True):
+        for name in files:
+            cloud_os.remove(cloud_os.path.join(root, name))
+        for name in dirs:
+            clean_remote_storage(cloud_os.path.join(root, name))
+\end{lstlisting}
+
+As we can observe, the Multiprocessing API framework allows us to access the remote object storage as if it were a local file system. As a consequence of this, the code becomes simpler, due to the fact that we do not need to add any cloud provider SDK  to manage object storages. Instead of this, we make use of the remote object storages through the classical Python files management. Additionally, this framework facilitates the transparency and the portability of this code. In the COS-Prototype we are coupled to IBM Cloud through the IBM SDK. Therefore, if we would like to move from IBM to another cloud provider, we would need to replace the COS client with the corresponding SDK provider. As a consequence of this, not only would we need to refactorize our code to integrate the new SDK, but also we would need to learn a new API from the new provider to achieve the same functionality. With the Multiprocessing API these kinds of changes do not impact the code. With only a small change in the framework configuration file, the code would be ready to work with the new provider chosen.
+
+\subsection{Managing serverless function invocation}
+In the following code blocks, we can observe how through the Multiprocessing API, we can make use of serverless functions as if it was a standard concurrent future invocation.
+
+\vspace{2mm}
+\noindent
+\textbf{COS  Prototype}
+\lstset{style=mystyle}
+\begin{lstlisting}[language=Python]
+
+import pywren_ibm_cloud as pywren
+
+pw = pywren.ibm_cf_executor(runtime='cactusone/pywren-protomol:3.6.14', runtime_memory=2048)
+pw.map(serverless_task_process, task_list_iterdata)
+activation_list = pw.get_result()
+\end{lstlisting}
+
+\noindent
+\textbf{Multiprocessing API  Prototype}
+\lstset{style=mystyle}
+\begin{lstlisting}[language=Python]
+from cloudbutton.multiprocessing import Pool
+
+pool_client = Pool()
+activation_list = pool_client.map(serverless_task_process, task_list_iterdata)
+\end{lstlisting}
+
+As we can appreciate from these fragments of code, the Multiprocessing API simplifies the access to serverless platforms allowing their invocation through the Pool object. As previously occurred, with the access to remote object storages, the Multiprocessing framework offers a standard object of a Python library as a multicloud abstraction. Thus, we can reach the same flexibility that IBM-PyWren provides, but without needing to learn a new API to do that.
+
+\subsection{Managing in-memory data structures}
+In the following code blocks, we can observe how Multiprocessing API provides a set of shared in-memory data structures that allow us to share data through serverless functions without developing any extra piece of code. It is important to clarify that we are focusing only on the dictionary data structure, but that is not the unique distributed data structure supported by Multiprocessing API.
+
+
+\vspace{2mm}
+\noindent
+\textbf{Redis Prototype}
+\lstset{style=mystyle}
+\begin{lstlisting}[language=Python]
+
+import redis
+
+class RedisConnector:
+   __instance = None
+
+   @staticmethod
+   def getInstance():
+      if RedisConnector.__instance == None:
+         RedisConnector()
+      return RedisConnector.__instance
+
+   def __init__(self):
+       host = configuration["connector"]["host"]
+       port = configuration["connector"]["port"]
+       RedisConnector.__instance = redis.Redis(host=host, port=port)
+
+s = RedisConnector()
+
+def save_file_to_redis(key,value):
+    redis_connector = RedisConnector.getInstance()
+    redis_connector.set(str(key),value)
+
+def get_value(key):
+    redis_connector = RedisConnector.getInstance()
+    return redis_connector.get(str(key))
+
+\end{lstlisting}
+
+\noindent
+\textbf{Multiprocessing Manager Prototype}
+\lstset{style=mystyle}
+\begin{lstlisting}[language=Python]
+from cloudbutton.multiprocessing import Manager
+
+shared_map = Manager().dict()
+shared_map[target_key] = src.readlines()
+\end{lstlisting}
+
+As we can observe from these code snippets, the Multiprocessing API facilitates widely the use of in-memory data structures. In our Redis Prototype, we needed to develop a redis connector to make use of the database. This means extra complexity in terms of code lines, which also means more code to test and maintain. Additionally, this means download, install, and learn the use of an extra library. On the other hand, we observe how Multiprocessing API offers the same functionality through the Manager object. This not only facilitates the use of distributed data structures due to the fact that the Manager interface is a well known object among Python developers, but it also makes the integration of these structures straightforward for the users. The unique requirement to make use of this feature is to configure the Redis database settings in the framework configuration file.
+
+
+\label{sec:moving towards simplicity}
+
+
+\section{Conclusions}
+As we observed throughout this work it is possible to implement the replica exchange algorithm as a serverless solution, reducing the total execution time compared to the original Work Queue implementation assigning a CPU core for each task started by the main program. To guarantee a CPU core for each task in FaaS prototypes, it is required to configure each function with 2048 MB of memory. As a counterpart, to ensure the same conditions with Work Queue, it is necessary to run as many Work Queue workers as CPU cores available for each node in the cluster. Additionally, from the FaaS prototypes perspective, the COS Prototype is the slowest prototype. This is due to the fact that cloud object storages are not prepared to support fine-grained operations. In addition to this, Redis and Local Dictionary prototypes make use of in-memory storages and they present similar execution times due to the fact that the network latency is depreciable when the Redis instance is present in the same availability zone where the master program and the cloud functions request it. Also, Redis tends to be better in terms of scalability and information back-up but has an extra complexity because it is necessary to manage another server as well as add more pieces of code to integrate with it, which requires more code to test and maintain it.\\
+From the scalability perspective, FaaS prototypes showed a high degree of elasticity and adaptability because it is available to scale up or scale down the number of cloud functions executed  according to the number of tasks required at some point in the time. In addition to this, IBM-PyWren can not only manage the cloud functions scaling dynamically, it can also do it without any user intervention over the underlying hardware. On the other hand, when we experimented with Work Queue implementation, we needed to increment manually the number of servers available within our cluster depending on the number of tasks executed.\\
+Throughout the Multiprocessing API framework, it is possible to implement multicloud solutions following the access transparency principle due to the fact that it is possible to manage remote resources as local resources making use of well known Python objects and APIs. Therefore, it not only flattens the learning curve to integrate an application with the cloud but also avoids the vendor lock-in situation, where an application could be highly coupled with a specific vendor. Thus, moving from one provider to another becomes easy and transparent for developers without generating impact in the applications code.\\
+In terms of future work, beyond serverless itself, there is a lot of work to do to facilitate the integration  of it in the world of HPC. Although frameworks such as IBM-PyWren and Multiprocessing API allow their users to move some types of problematics easily from HPC to serverless, there are still a lot of tools inside the HPC community which could be adapted to make use of serverless computing. In this context, the CLOUDLAB research team is exploring how to move some of the components of Dask library, such as Numpy[ref], Pandas[ref] or scikit-learn[ref]) to serverless. Also, as part of this work, they are exploring how to implement a serverless Direct Acyclic Graph(DAG) scheduler, which could be used as the basis for refactoring and developing other data tools based on this paradigm.
+
+
+
+\label{sec:conclusions}
+
+...
+
+%%
+%% The acknowledgments section is defined using the "acks" environment
+%% (and NOT an unnumbered section). This ensures the proper
+%% identification of the section in the article metadata, and the
+%% consistent spelling of the heading.
+\begin{acks}
+This work has been partially supported by ...
+\end{acks}
+
+
+
+...a citation~\cite{trilemma}
+\end{document}
+%%
+%% The next two lines define the bibliography style to be used, and
+%% the bibliography file.
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{main}
+\endinput
