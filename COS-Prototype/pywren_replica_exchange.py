@@ -574,7 +574,6 @@ def serverless_task_process(task, time_per_function,ibm_cos):
     # execute local script
     # upload result files
     # return data
-    #temp_dir = '/Users/gilv/Dev/tmp/exec' + '/' + pywren_task.tag
     time_per_function = time.time()
     temp_dir = task.temp_dir
     bucket = task.bucket

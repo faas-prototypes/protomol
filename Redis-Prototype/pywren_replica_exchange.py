@@ -557,7 +557,6 @@ def serverless_task_process(task, protomol_file_template_key,time_per_function,i
     # execute local script
     # upload result files
     # return data
-    #temp_dir = '/Users/gilv/Dev/tmp/exec' + '/' + pywren_task.tag
     time_per_function = time.time()
     temp_dir = task.temp_dir
     bucket = task.bucket

@@ -568,7 +568,6 @@ def serverless_task_process(task, protomol_file,ibm_cos):
     # execute local script
     # upload result files
     # return data
-    #temp_dir = '/Users/gilv/Dev/tmp/exec' + '/' + pywren_task.tag
     temp_dir = task.temp_dir
     bucket = task.bucket
     if not os.path.exists(temp_dir):
