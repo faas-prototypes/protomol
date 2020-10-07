@@ -1,0 +1,44 @@
+pywren:
+    storage_bucket: 'protomol-replica-east'
+    #storage_prefix: pywren.jobs
+    #storage_backend: ibm_cos
+    #compute_backend: ibm_cf
+    #rabbitmq_monitor: <True/False>
+    #data_cleaner: <True/False>
+    #runtime :
+    runtime_timeout: 15000     # Default timeout
+    #runtime_memory: 256         # Default memory
+    #invocation_retry: <True/False>
+    #retry_sleeps: [1, 5, 10, 20, 30]
+    #retries: 5
+
+ibm:
+    iam_api_key: 'GZ8BPKZhq2apPE0iQVSt4Rv80mQYatvTAi7p02TG-unr'
+
+ibm_cf:
+    endpoint    : 'https://us-east.functions.cloud.ibm.com'
+    namespace   : 'protomol-replica'
+    namespace_id : '400ad145-06ba-43e6-a8e6-106063eb39f1'
+
+ibm_cos:
+    bucket      : 'protomol-replica-east'
+    endpoint    : 'https://s3.us-east.cloud-object-storage.appdomain.cloud'
+    private_endpoint: 'https://s3.private.us-east.cloud-object-storage.appdomain.cloud'
+    api_key     : 'Txt_sQNk11woC7IbMLKTyxeqG-NLZn8aO3e-W0BI7fEx'
+    access_key : 'c2f57f1c6ad54b29bb6ca1384771bcf5'
+    secret_key : 'f6126d997ad2efdf4d458cfb6e7848adb9112b6dc6fe34f3'
+
+#rabbitmq:
+    #amqp_url   : <RABBIT_AMQP_URL>  # amqp://
+
+#knative:
+#   endpoint    : <ISTIO_INGRESS_ENDPOINT>
+#   docker_user : <DOCKER_HUB_USERNAME>
+#   docker_token: <DOCKER_HUB_TOKEN>
+
+#swift:
+    #auth_url   : <SWIFT_AUTH_URL>
+    #region     : <SWIFT_REGION>
+    #user_id    : <SWIFT_USER_ID>
+    #project_id : <SWIFT_PROJECT_ID>
+    #password   : <SWIFT_PASSWORD>

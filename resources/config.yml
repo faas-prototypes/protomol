@@ -1,5 +1,5 @@
 pywren:
-    storage_bucket: '<BUCKET>'
+    storage_bucket: 'protomol-replica-east'
     #storage_prefix: pywren.jobs
     #storage_backend: ibm_cos
     #compute_backend: ibm_cf
@@ -13,20 +13,20 @@ pywren:
     #retries: 5
 
 ibm:
-    iam_api_key: '<API-KEY>'
+    iam_api_key: 'GZ8BPKZhq2apPE0iQVSt4Rv80mQYatvTAi7p02TG-unr'
 
 ibm_cf:
-    endpoint    : '<FUNCTIONS_ENDPOINT>'
-    namespace   : '<NAMESPACE>'
-    namespace_id : '<NAMESPACES_ID>'
+    endpoint    : 'https://us-east.functions.cloud.ibm.com'
+    namespace   : 'protomol-replica'
+    namespace_id : '400ad145-06ba-43e6-a8e6-106063eb39f1'
 
 ibm_cos:
-    bucket      : '<BUCKET>'
-    endpoint    : '<ENDPOINT>'
-    private_endpoint: '<PRIVATE_ENDPOINT>'
-    api_key     : '<API_KEY>'
-    access_key : '<ACCESS_KEY>'
-    secret_key : '<SECRET_KEY>'
+    bucket      : 'protomol-replica-east'
+    endpoint    : 'https://s3.us-east.cloud-object-storage.appdomain.cloud'
+    private_endpoint: 'https://s3.private.us-east.cloud-object-storage.appdomain.cloud'
+    api_key     : 'Txt_sQNk11woC7IbMLKTyxeqG-NLZn8aO3e-W0BI7fEx'
+    access_key : 'c2f57f1c6ad54b29bb6ca1384771bcf5'
+    secret_key : 'f6126d997ad2efdf4d458cfb6e7848adb9112b6dc6fe34f3'
 
 #rabbitmq:
     #amqp_url   : <RABBIT_AMQP_URL>  # amqp://
