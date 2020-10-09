@@ -1,4 +1,3 @@
 redis==3.4.1
 ibm-cos-sdk==2.6.0
-pywren-ibm-cloud==1.4.2
-git+git://github.com/cloudbutton/cloudbutton.git
+lithops==2.0.0
