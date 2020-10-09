@@ -1,6 +1,6 @@
 import redis_connector as redis_connector
 from collections import OrderedDict
-import  pywren_protomol_functions as pywren_protomol
+import protomol_utils as protomol_utils
 import random
 import json
 
@@ -14,9 +14,9 @@ def save_protomol_template(output_path, pdb_file, psf_file, par_file, monte_carl
     protomol_config_map = OrderedDict()
 
     # Parse supplied files so only actual file name is passed, not full path of the file name
-    input_pdb = "%s.%d-%d.pdb" % (pywren_protomol.remove_trailing_dots(pywren_protomol.parse_file_name(pdb_file)), replica_obj.id, monte_carlo_step)
-    parsed_psf_file = pywren_protomol.parse_file_name(psf_file)
-    parsed_par_file = pywren_protomol.parse_file_name(par_file)
+    input_pdb = "%s.%d-%d.pdb" % (protomol_utils.remove_trailing_dots(protomol_utils.parse_file_name(pdb_file)), replica_obj.id, monte_carlo_step)
+    parsed_psf_file = protomol_utils.parse_file_name(psf_file)
+    parsed_par_file = protomol_utils.parse_file_name(par_file)
     str_output_freq = str(output_freq)
     str_md_steps = str(md_steps)
     protomol_config_map["randomtype"] = "1"
@@ -28,13 +28,13 @@ def save_protomol_template(output_path, pdb_file, psf_file, par_file, monte_carl
 
     if monte_carlo_step > 0:
         protomol_config_map["velfile"] = "%s.%d-%d.vel" % (
-        pywren_protomol.remove_trailing_dots(pywren_protomol.parse_file_name(pdb_file)), replica_obj.id, monte_carlo_step)
+            protomol_utils.remove_trailing_dots(protomol_utils.parse_file_name(pdb_file)), replica_obj.id, monte_carlo_step)
 
     protomol_config_map["dofinPDBPosFile"] = "true"
     protomol_config_map["finPDBPosFile"] = "%s.%d-%d.pdb" % (
-    pywren_protomol.remove_trailing_dots(pywren_protomol.parse_file_name(pdb_file)), replica_obj.id, monte_carlo_step + 1)
+        protomol_utils.remove_trailing_dots(protomol_utils.parse_file_name(pdb_file)), replica_obj.id, monte_carlo_step + 1)
     protomol_config_map["finXYZVelFile"] = "%s.%d-%d.vel" % (
-    pywren_protomol.remove_trailing_dots(pywren_protomol.parse_file_name(pdb_file)), replica_obj.id, monte_carlo_step + 1)
+        protomol_utils.remove_trailing_dots(protomol_utils.parse_file_name(pdb_file)), replica_obj.id, monte_carlo_step + 1)
 
     protomol_config_map["temperature"] = "%f" % replica_obj.temp
     protomol_config_map["boundaryConditions"] = "%s" % DEFAULT_BOUNDARY_CONDITIONS

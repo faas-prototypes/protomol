@@ -737,8 +737,8 @@ if __name__ == "__main__":
     monte_carlo_steps = protomol_utils.DEFAULT_MONTE_CARLO_STEPS
 
     upload_data = True
-    os.environ['PYWREN_CONFIG_FILE'] = './../resources/lithops_config.yml'
-    with open(os.environ['PYWREN_CONFIG_FILE']) as file:
+    os.environ['LITHOPS_CONFIG_FILE'] = './../resources/lithops_config.yml'
+    with open(os.environ['LITHOPS_CONFIG_FILE']) as file:
         input_config = yaml.full_load(file)
 
     ibm_cos = cos.get_ibm_cos_client(input_config)
