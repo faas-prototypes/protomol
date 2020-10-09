@@ -2,7 +2,8 @@
 
 ## Introduction
 
-This project is a reimplementation of [Replica Exchange with Workqueue](https://github.com/cooperative-computing-lab/cctools/tree/master/apps/wq_replica_exchange) making use of [Lithops frameworks](https://github.com/lithops-cloud/lithops) and [Multiprocessing API](https://github.com/cloudbutton/cloudbutton). In addition to this, we present different prototypes with the goal to analyze the performance and the scalability of each one.
+\This project is a reimplementation of [Replica Exchange with Workqueue](https://github.com/cooperative-computing-lab/cctools/tree/master/apps/wq_replica_exchange) making use of [Lithops frameworks](https://github.com/lithops-cloud/lithops) and [Multiprocessing API](https://github.com/cloudbutton/cloudbutton). In addition to this, we present different prototypes with the goal to analyze the performance and the scalability of each one.
+
 
 ## Environment setup
 
