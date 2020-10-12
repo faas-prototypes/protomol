@@ -7,6 +7,8 @@ import json
 DEFAULT_BOUNDARY_CONDITIONS = "Vacuum"
 
 
+def get_file(file_key):
+    return redis_connector.get_value(file_key)
 
 def save_protomol_template(output_path, pdb_file, psf_file, par_file, monte_carlo_step, md_steps, output_freq,
                            replica_obj, generate_xyz = False, generate_dcd = False):
@@ -79,6 +81,9 @@ def save_protomol_template(output_path, pdb_file, psf_file, par_file, monte_carl
 
     return cfg_file_name
 
+def clear_db():
+    redis_connector.clear_db()
+
 
 def get_protomol_template_as_file(key):
 
@@ -86,6 +91,12 @@ def get_protomol_template_as_file(key):
     write_str = build_file(protomol_template_file)
     return write_str
 
+def upload_binary_file(src, target_key):
+    with open(src, 'rb') as f:
+        redis_connector.save_file_to_redis(target_key,f.read())
+
+def upload_file(src, target_key):
+   redis_connector.save_file_to_redis(target_key,src)
 
 def build_file(properties):
     write_str=""

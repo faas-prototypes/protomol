@@ -38,3 +38,6 @@ def get_value(key):
     redis_connector = RedisConnector.getInstance()
     return redis_connector.get(str(key))
 
+def clear_db():
+    redis_connector = RedisConnector.getInstance()
+    redis_connector.flushdb()

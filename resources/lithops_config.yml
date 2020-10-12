@@ -1,4 +1,4 @@
-lithops: 
+lithops:
     storage_bucket: <BUCKET_NAME>
     #storage_backend: ibm_cos
     #compute_backend: ibm_cf
@@ -13,6 +13,10 @@ lithops:
 
 #ibm:
    #iam_api_key: <IAM KEY>
+redis:
+    host : <HOST>
+    port : <PORT>
+    password: <PASSWORD>
 
 ibm_cf:
     endpoint    : <REGION_ENDPOINT>
@@ -26,3 +30,5 @@ ibm_cos:
     api_key     : <API_KEY>
     #access_key : <ACCESS_KEY>  # Optional
     #secret_key : <SECRET_KEY>  # Optional
+
+
