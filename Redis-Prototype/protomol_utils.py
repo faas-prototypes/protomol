@@ -12,7 +12,7 @@ DEFAULT_BOUNDARY_CONDITIONS = "Vacuum"
 DEFAULT_OUTPUT_FREQ = 100
 DEFAULT_PHYSICAL_TEMP = 300
 
-EXECUTABLE = "$PROTOMOL"
+EXECUTABLE = "ProtoMol"
 
 #-----------------------------Global Data-------------------------------------
 pdb_file = ""
