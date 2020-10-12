@@ -1,7 +1,5 @@
 # Get ProtoMol related bindings from protomol_functions.
 import  protomol_utils
-
-
 # All other dependencies are standard python.
 import time
 import math
@@ -9,18 +7,15 @@ import random
 import sys
 import os
 import yaml
-import shutil
 import lithops
 import logging
 import getopt
-import protomol_template_service as template_service
+import stotage_service as storage_service
 
 logging.basicConfig(level=logging.DEBUG)
 
 if sys.version_info[0] >= 3:
     unicode = str
-
-import cos_utils as cos
 
 #-------------------------------Global Variables----------------------------
 protomol_local_install = False
@@ -203,7 +198,7 @@ def assign_task_input_files(task, replica_list, replica_id, replica_next_startin
     task.execn_script = execn_script
 
     target_key = "%s/simfiles/runs/%s" % (protomol_utils.output_path, protomol_utils.remove_first_dots(protomol_utils.parse_file_name(execn_script_name)))
-    cos.upload_to_cos_2(str.encode(execn_script), target_key)
+    storage_service.upload_file(str.encode(execn_script), target_key)
 
 
     #Assign executable that will be run on remote worker to pywren_task string.
@@ -229,11 +224,11 @@ def cf_main(replica_list, replicas_to_run):
         #Assign local and remote psf and par inputs
     target_psf_file = "%s/simfiles/input_data/ww_exteq_nowater1.psf"%(protomol_utils.output_path)
     if upload_data:
-        cos.upload_to_cos(psf_file, target_psf_file)
+        storage_service.upload_binary_file(psf_file, target_psf_file)
     
     target_par_file = "%s/simfiles/input_data/par_all27_prot_lipid.inp"%(protomol_utils.output_path)
     if upload_data:
-        cos.upload_to_cos(par_file, target_par_file)
+        storage_service.upload_binary_file(par_file, target_par_file)
 
 
     while num_replicas_completed < len(replica_list):
@@ -417,7 +412,7 @@ def wait_nobarrier(activation_list, replica_list):
 
             #Get potential energy value of the completed replica run.
             energies_file =  "%s/simfiles/eng/%d/%d.eng" % (protomol_utils.output_path, replica_id, replica_id)
-            energies_stream =  template_service.get_file(protomol_utils.remove_first_dots(energies_file))._raw_stream
+            energies_stream =  storage_service.get_file(protomol_utils.remove_first_dots(energies_file))._raw_stream
             #open(energies_file, "r")
             line = energies_stream.readline()
             print (line)
@@ -552,7 +547,7 @@ def serverless_task_process(task, protomol_file_template_key):
     if not os.path.exists(temp_dir):
         os.mkdir(temp_dir)
 
-    protomol_file = template_service.get_protomol_template_as_file(protomol_file_template_key)
+    protomol_file = storage_service.get_protomol_template_as_file(protomol_file_template_key)
     #exists = os.path.isfile(temp_dir + '/' +task.input_remote_execn_file)
     #if not exists:
     input_local_execn_file = protomol_utils.remove_first_dots(task.input_local_execn_file)
@@ -564,19 +559,19 @@ def serverless_task_process(task, protomol_file_template_key):
     print ("local exec file is {}, remote {}".format(input_local_execn_file, task.input_remote_execn_file))
     
     input_local_file_pdb = protomol_utils.remove_first_dots(task.input_local_file_pdb)
-    res = template_service.get_file(input_local_file_pdb)
+    res = storage_service.get_file(input_local_file_pdb)
     with open(temp_dir + '/' +task.input_remote_file_pdb, 'wb') as localfile:
         localfile.write(res)
     localfile.close()
 
     input_par_file = protomol_utils.remove_first_dots(task.input_par_file)
-    res = template_service.get_file(input_par_file)
+    res = storage_service.get_file(input_par_file)
     with open(temp_dir + '/' +task.input_par_file_name, 'wb') as localfile:
         localfile.write(res)
     localfile.close()
     
     input_psf_file = protomol_utils.remove_first_dots(task.input_psf_file)
-    res = template_service.get_file(input_psf_file)
+    res = storage_service.get_file(input_psf_file)
     with open(temp_dir + '/' +task.input_psf_file_name, 'wb') as localfile:
         localfile.write(res)
     localfile.close()
@@ -585,7 +580,7 @@ def serverless_task_process(task, protomol_file_template_key):
         input_vel_file = protomol_utils.remove_first_dots(task.input_local_file_velocity)
         print (input_vel_file)
         print (task.input_remote_file_velocity)
-        res = template_service.get_file(input_vel_file)
+        res = storage_service.get_file(input_vel_file)
         with open(temp_dir + '/' +task.input_remote_file_velocity, 'wb') as localfile:
             localfile.write(res)
         localfile.close()
@@ -630,14 +625,14 @@ def serverless_task_process(task, protomol_file_template_key):
     output_file_local_velocity = task.output_file_local_velocity
     #str: ww_exteq_nowater1.1-1.vel
     output_file_remote_velocity = task.output_file_remote_velocity
-    cos.upload_to_cos(temp_dir + '/' + output_file_remote_velocity,
+    storage_service.upload_binary_file(temp_dir + '/' + output_file_remote_velocity,
                       protomol_utils.remove_first_dots(output_file_local_velocity))
     
     #str: ./simfiles/350.0/ww_exteq_nowater1.1-1.pdb
     output_file_pdb = task.output_file_pdb
     #str: ww_exteq_nowater1.1-1.pdb
     output_file_pdb_name = task.output_file_pdb_name
-    cos.upload_to_cos(temp_dir + '/' + output_file_pdb_name,
+    storage_service.upload_binary_file(temp_dir + '/' + output_file_pdb_name,
                       protomol_utils.remove_first_dots(output_file_pdb))
     task.result = 0
     time_per_function = time.time() - time_per_function
@@ -763,7 +758,7 @@ if __name__ == "__main__":
     if upload_data:
         # We upload just once the pdb_file, because hasn't sense to upload it for each temperature configuration
         target_key = "/simfiles/%s/%s.pdb" % (protomol_utils.output_path, protomol_utils.remove_trailing_dots(protomol_utils.parse_file_name(pdb_file)))
-        cos.upload_to_cos(pdb_file, target_key)
+        storage_service.upload_binary_file(pdb_file, target_key)
 
     #Create random replica pairs to check for exchange at each step.
 
@@ -772,7 +767,7 @@ if __name__ == "__main__":
     #create config files here.
     for i in range(protomol_utils.monte_carlo_steps):
         for j in range(num_replicas):
-            config_path = template_service.save_protomol_template(protomol_utils.output_path, pdb_file, psf_file, par_file, i, protomol_utils.md_steps, protomol_utils.output_freq, replica_list[j])
+            config_path = storage_service.save_protomol_template(protomol_utils.output_path, pdb_file, psf_file, par_file, i, protomol_utils.md_steps, protomol_utils.output_freq, replica_list[j])
     replicas_to_run = []
     for i in range(num_replicas):
         replicas_to_run.append(i)

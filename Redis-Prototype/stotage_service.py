@@ -92,6 +92,12 @@ def get_protomol_template_as_file(key):
     write_str = build_file(protomol_template_file)
     return write_str
 
+def upload_binary_file(src, target_key):
+    with open(src, 'rb') as f:
+        redis_connector.save_file_to_redis(target_key,f.read())
+
+def upload_file(src, target_key):
+   redis_connector.save_file_to_redis(target_key,src)
 
 def build_file(properties):
     write_str=""
