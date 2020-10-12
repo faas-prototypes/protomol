@@ -316,9 +316,9 @@ def cf_main(replica_list, replicas_to_run):
             execution_time_per_function.append(activation_list[j].function_time)
 
         if use_barrier:
-            replicas_to_run=wait_barrier(activation_list, replica_list, replica_next_starting_step, 5)
+            replicas_to_run=wait_barrier(activation_list, replica_list, replica_next_starting_step)
         else:
-            replicas_to_run=wait_nobarrier(activation_list,replica_list, 5)
+            replicas_to_run=wait_nobarrier(activation_list,replica_list)
         activation_list = []
 
 '''The barrier version where it waits for all replicas to finish a given MC step.
