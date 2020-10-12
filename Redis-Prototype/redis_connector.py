@@ -5,8 +5,8 @@ import redis
 configuration = {
 
 	"connector": {
-		"host": "3.216.27.64",
-		"port": 6379
+		"host": "<HOST>",
+		"port": "<PORT>"
 
 	}
 }
