@@ -7,10 +7,6 @@ import json
 DEFAULT_BOUNDARY_CONDITIONS = "Vacuum"
 
 
-def save_file(file_key,file_content):
-    redis_connector.save_file_to_redis(file_key, file_content)
-
-
 def get_file(file_key):
     return redis_connector.get_value(file_key)
 

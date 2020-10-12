@@ -1,5 +1,5 @@
 lithops:
-    storage_bucket: 'protomol-replica-east'
+    storage_bucket: 'protomol-replica-east-2'
     #storage_prefix: pywren.jobs
     #storage_backend: ibm_cos
     #compute_backend: ibm_cf
@@ -25,12 +25,12 @@ redis:
         port : "6379"
 
 ibm_cos:
-   bucket      : 'protomol-replica-east'
+   bucket      : 'protomol-replica-east-2'
    endpoint    : 'https://s3.us-east.cloud-object-storage.appdomain.cloud'
    private_endpoint: 'https://s3.private.us-east.cloud-object-storage.appdomain.cloud'
-   api_key     : 'Txt_sQNk11woC7IbMLKTyxeqG-NLZn8aO3e-W0BI7fEx'
-   access_key : 'c2f57f1c6ad54b29bb6ca1384771bcf5'
-   secret_key : 'f6126d997ad2efdf4d458cfb6e7848adb9112b6dc6fe34f3'
+   api_key     : 'eqP3n8nMSd1IHLqDlvyH1x7LUcxLQlYPXFQ1pZ0IAA3Z'
+   access_key : 'e4ff6714d9d64e2692564d9bd059c495'
+   secret_key : '854c2d91720a81a2cd2375fa529524c9a8c5f440a26467d6'
 
 #rabbitmq:
     #amqp_url   : <RABBIT_AMQP_URL>  # amqp://

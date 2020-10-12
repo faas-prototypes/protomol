@@ -85,12 +85,11 @@ def generate_execn_script(replica_obj, replica_next_starting_step, replica_next_
 
     #check if protomol comes installed on the remote worker site.
 
-    execn_string = "$PROTOMOL"
 
-   # if protomol_local_install:
-    #    execn_string = "%s" % protomol_utils.EXECUTABLE
-    #else:
-     #   execn_string = "./%s" % protomol_utils.EXECUTABLE
+    if protomol_local_install:
+        execn_string = "%s" % protomol_utils.EXECUTABLE
+    else:
+        execn_string = "./%s" % protomol_utils.EXECUTABLE
     #initialize string that will hold the file strings.
     write_str = ""
 
@@ -233,8 +232,8 @@ def cf_main(replica_list, replicas_to_run):
 
     while num_replicas_completed < len(replica_list):
 
-        #pw = lithops.ibm_cf_executor(runtime='cactusone/pywren-protomol:3.6.14', runtime_memory=2048)
-        pw = lithops.local_executor()
+        pw = lithops.ibm_cf_executor(runtime='cactusone/pywren-protomol:3.6.14', runtime_memory=2048)
+
         print ("num_replicas_completed: {}".format(num_replicas_completed))
         print ("len(replica_list): {}".format(len(replica_list)))
 
