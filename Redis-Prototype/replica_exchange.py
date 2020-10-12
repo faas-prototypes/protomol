@@ -10,7 +10,7 @@ import yaml
 import lithops
 import logging
 import getopt
-import stotage_service as storage_service
+import storage_service as storage_service
 
 logging.basicConfig(level=logging.DEBUG)
 
