@@ -81,6 +81,9 @@ def save_protomol_template(output_path, pdb_file, psf_file, par_file, monte_carl
 
     return cfg_file_name
 
+def clear_db():
+    redis_connector.clear_db()
+
 
 def get_protomol_template_as_file(key):
 

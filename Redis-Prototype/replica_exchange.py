@@ -709,12 +709,7 @@ if __name__ == "__main__":
     with open(os.environ['LITHOPS_CONFIG_FILE']) as file:
         input_config = yaml.full_load(file)
 
-    #ibm_cos = cos.get_ibm_cos_client(input_config)
-    #print("Clean old data from COS - start")
-    #cos.clean_from_cos(input_config, input_config['ibm_cos']['bucket'], 'simfiles')
-    #print("Clean previous data from COS - completed")
-
-    #bucket = input_config['ibm_cos']['bucket']
+    storage_service.clear_db()
 
     monte_carlo_steps = protomol_utils.DEFAULT_MONTE_CARLO_STEPS
 
