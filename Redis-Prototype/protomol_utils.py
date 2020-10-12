@@ -5,14 +5,14 @@ import math
 import os
 
 #-------------------------------Constants-----------------------------------
-DEFAULT_MONTE_CARLO_STEPS = 10
+DEFAULT_MONTE_CARLO_STEPS = 5
 DEFAULT_OUTPUT_PATH = os.getcwd()
 DEFAULT_MDSTEPS = 100
 DEFAULT_BOUNDARY_CONDITIONS = "Vacuum"
 DEFAULT_OUTPUT_FREQ = 100
 DEFAULT_PHYSICAL_TEMP = 300
 
-EXECUTABLE = "ProtoMol"
+EXECUTABLE = "$PROTOMOL"
 
 #-----------------------------Global Data-------------------------------------
 pdb_file = ""
@@ -84,13 +84,12 @@ def metropolis( u_i, u_j, t_i, t_j ):
         return False
     
 class Task(object):
-    def __init__(self, task_str, temp_dir, bucket):
+    def __init__(self, task_str, temp_dir):
         self.function_time= None
         self.task_str = task_str
         self.input_conf_file = []
         self.result = 1
         self.temp_dir = temp_dir
-        self.bucket = bucket
         self.input_local_file_velocity = None
         self.energy_stream = None
         self.execn_script = None

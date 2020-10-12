@@ -2,6 +2,8 @@ import logging
 from pathlib import Path
 import ibm_boto3
 from ibm_botocore.client import Config
+import protomol_template_service as template_service
+
 
 logging.getLogger('ibm_boto3').setLevel(logging.CRITICAL)
 logging.getLogger('ibm_botocore').setLevel(logging.CRITICAL)
@@ -17,11 +19,13 @@ def get_ibm_cos_client(config):
                             endpoint_url=config['ibm_cos']['endpoint'])
 
 
-def upload_to_cos(cos_client, src, target_bucket, target_key):
-    logger.info('Copying from {} to {}/{}'.format(src, target_bucket, target_key))
-    with open(src, "rb") as fp:
-        cos_client.put_object(Bucket=target_bucket, Key=target_key, Body=fp)
-    logger.info('Copy completed for {}/{}'.format(target_bucket, target_key))
+def upload_to_cos(src, target_key):
+    with open(src, 'rb') as f:
+        template_service.save_file(target_key,f.read())
+
+def upload_to_cos_2(src, target_key):
+   template_service.save_file(target_key,src)
+
 
 def upload_bytes_to_cos(cos_client, bytes_data, target_bucket, target_key):
     cos_client.put_object(Bucket=target_bucket, Key=target_key, Body=bytes_data)

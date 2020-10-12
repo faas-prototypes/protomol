@@ -7,6 +7,12 @@ import json
 DEFAULT_BOUNDARY_CONDITIONS = "Vacuum"
 
 
+def save_file(file_key,file_content):
+    redis_connector.save_file_to_redis(file_key, file_content)
+
+
+def get_file(file_key):
+    return redis_connector.get_value(file_key)
 
 def save_protomol_template(output_path, pdb_file, psf_file, par_file, monte_carlo_step, md_steps, output_freq,
                            replica_obj, generate_xyz = False, generate_dcd = False):
