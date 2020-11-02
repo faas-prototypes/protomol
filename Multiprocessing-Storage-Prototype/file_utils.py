@@ -1,7 +1,6 @@
 import logging
-import cloudbutton.cloud_proxy as proxy
-from cloudbutton.cloud_proxy import os as cloud_os
-from cloudbutton.cloud_proxy import open as cloud_open
+from lithops.multiprocessing.cloud_proxy import os
+from lithops.multiprocessing.cloud_proxy import open as cloud_open
 
 logger = logging.getLogger('pywren-protomol')
 
@@ -25,16 +24,38 @@ def write_file_locally(dir, content):
             localfile.writelines(content)
 
 
-
 def clean_remote_storage(prefix):
     print("clean remote storage for {}".format(prefix))
-    for root, dirs, files in cloud_os.walk(prefix, topdown=True):
+    storage = os.__getattribute__('_storage').storage
+    for root, dirs, files in walk(storage,prefix):
         for name in files:
-            cloud_os.remove(cloud_os.path.join(root, name))
+            storage.storage_handler.delete_object("protomol-replica-east", os.path.join(root, name))
         for name in dirs:
-            clean_remote_storage(cloud_os.path.join(root, name))
+            clean_remote_storage(os.path.join(root, name))
 
 
 
+def walk(storage, top, topdown=True, onerror=None, followlinks=False):
+    dirs = []
+    files = []
 
+    for path in storage.storage_handler.list_keys("protomol-replica-east", top):
+       if path.endswith('/'):
+           dirs.append(path[:-1])
+       else:
+           files.append(path)
 
+       if dirs == [] and files == [] and not storage.path.exists(top):
+            raise StopIteration
+
+       elif topdown:
+         yield (top, dirs, files)
+         for dir in dirs:
+             for result in walk(storage,'/'.join([top, dir]), topdown, onerror, followlinks):
+                yield result
+
+       else:
+          for dir in dirs:
+             for result in walk(storage,'/'.join([top, dir]), topdown, onerror, followlinks):
+                 yield result
+          yield (top, dirs, files)
