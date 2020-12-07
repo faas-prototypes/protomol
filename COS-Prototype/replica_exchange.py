@@ -245,7 +245,7 @@ def cf_main(ibm_cos, bucket, replica_list, replicas_to_run):
 
     while num_replicas_completed < len(replica_list):
 
-        pw = lithops.ibm_cf_executor(runtime='cactusone/pywren-protomol:3.6.14', runtime_memory=2048)
+        pw = lithops.FunctionExecutor()
         print ("num_replicas_completed: {}".format(num_replicas_completed))
         print ("len(replica_list): {}".format(len(replica_list)))
 
