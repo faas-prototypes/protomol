@@ -1,5 +1,5 @@
 # Get ProtoMol related bindings from protomol_functions.
-import  pywren_protomol_functions as protomol_utils
+import protomol_utils
 
 # All other dependencies are standard python.
 import time
