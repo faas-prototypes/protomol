@@ -6,36 +6,24 @@ import time
 import math
 import random
 import sys
-from lithops.storage.cloud_proxy import open as cloud_open
-from lithops.multiprocessing import Pool
+from lithops.multiprocessing import Pool, Manager
 import os
 import logging
 import getopt
-
+import storage_service as storage_service
 
 logging.basicConfig(level=logging.DEBUG)
 
 if sys.version_info[0] >= 3:
     unicode = str
 
-import file_utils as file_utils
-
-
-#------------------------Stat Collection Variables------------------------------
-num_replica_exchanges = 0
-total_monte_carlo_step_time = 0
-num_task_resubmissions = 0
-replica_temp_execution_list = []
-
-
 #-------------------------------Global Variables----------------------------
 protomol_local_install = False
-use_barrier = True
+use_barrier = True #False
 generate_xyz = False
 generate_dcd = False
 debug_mode = True
 quart_temp_split = False
-
 mc_step_times = []
 
 #------------------------------Global Data--------------------------------------
@@ -46,10 +34,8 @@ replicas_running = 0
 local_temp_dir = '/tmp'
 #------------------------Stat Collection Variables------------------------------
 num_replica_exchanges = 0
-num_task_resubmissions = 0
-montecarlo_return_time = 0
-montecarlo_return_time_list = []
 total_monte_carlo_step_time = 0
+num_task_resubmissions = 0
 replica_temp_execution_list = []
 replica_exch_list = []
 step_time = 0
@@ -98,6 +84,8 @@ def generate_execn_script(replica_obj, replica_next_starting_step, replica_next_
     #execn_script_stream = open(execn_script_name, "w")
 
     #check if protomol comes installed on the remote worker site.
+
+
     if protomol_local_install:
         execn_string = "%s" % protomol_utils.EXECUTABLE
     else:
@@ -183,7 +171,7 @@ def assign_task_input_files(task, replica_list, replica_id, replica_next_startin
     task.specify_input_local_execn_file(local_execn_file, remote_execn_file, cache=False)
 
     #Assign local and remote pdb inputs
-    local_pdb_input_file = "%s/simfiles/%s/%s-%d.pdb" % (protomol_utils.output_path, replica_list[replica_id].temp, exchgd_replica_pdb, replica_next_starting_step)
+    local_pdb_input_file = "/simfiles/%s/%s.pdb" % (protomol_utils.output_path, protomol_utils.remove_trailing_dots(protomol_utils.parse_file_name(pdb_file)))
     remote_pdb_input_file = "%s-%d.pdb" % (replica_pdb, replica_next_starting_step)
     task.specify_input_pdb_file(local_pdb_input_file, remote_pdb_input_file, cache=False)
 
@@ -205,11 +193,10 @@ def assign_task_input_files(task, replica_list, replica_id, replica_next_startin
     [execn_script_name, execn_script] = generate_execn_script(replica_list[replica_id], replica_next_starting_step, replica_next_ending_step)
     print (execn_script)
     task.execn_script = execn_script
-    '''
-    if upload_data:
-        target_key = "%s/simfiles/runs/%s" % (pywren_protomol.output_path, pywren_protomol.remove_first_dots(pywren_protomol.parse_file_name(execn_script_name)))
-        cos.upload_bytes_to_cos(ibm_cos, str.encode(execn_script), input_config['ibm_cos']['bucket'], target_key)
-    '''        
+
+    target_key = "%s/simfiles/runs/%s" % (protomol_utils.output_path, protomol_utils.remove_first_dots(protomol_utils.parse_file_name(execn_script_name)))
+    storage_service.upload_file(str.encode(execn_script), target_key)
+
 
     #Assign executable that will be run on remote worker to pywren_task string.
     if not protomol_local_install:
@@ -218,7 +205,7 @@ def assign_task_input_files(task, replica_list, replica_id, replica_next_startin
 
 
 # Major replica exchange and scheduling is handled here
-def cf_main(pool_client, replica_list, replicas_to_run):
+def cf_main(pool_client,replica_list, replicas_to_run):
 
     #Stat collection variables
     global replicas_running
@@ -234,14 +221,15 @@ def cf_main(pool_client, replica_list, replicas_to_run):
         #Assign local and remote psf and par inputs
     target_psf_file = "%s/simfiles/input_data/ww_exteq_nowater1.psf"%(protomol_utils.output_path)
     if upload_data:
-        file_utils.upload_to_remote_storage(psf_file, target_psf_file)
+        storage_service.upload_binary_file(psf_file, target_psf_file)
     
     target_par_file = "%s/simfiles/input_data/par_all27_prot_lipid.inp"%(protomol_utils.output_path)
     if upload_data:
-        file_utils.upload_to_remote_storage(par_file, target_par_file)
+        storage_service.upload_binary_file(par_file, target_par_file)
 
 
     while num_replicas_completed < len(replica_list):
+
 
         print ("num_replicas_completed: {}".format(num_replicas_completed))
         print ("len(replica_list): {}".format(len(replica_list)))
@@ -298,9 +286,11 @@ def cf_main(pool_client, replica_list, replicas_to_run):
                 if (replica_next_ending_step == protomol_utils.monte_carlo_steps-1):
                     num_replicas_completed += 1
 
+                #Submit the pywren_task to WorkQueue for execution at remote worker.
+                print ("wq.submit(pywren_task): {}".format(task))
                 task_dictionary = {}
                 task_dictionary['task'] = task
-                task_dictionary['time_per_function'] = 0
+                task_dictionary['protomol_file_template_key'] = task.input_conf_file[0][1]
                 task_list_iterdata.append(task_dictionary)
 
                 #Submitted for execution. So mark this replica as running.
@@ -309,23 +299,25 @@ def cf_main(pool_client, replica_list, replicas_to_run):
 
         #Wait for tasks to complete.
         total_functions_executed+=len(task_list_iterdata)
-        #serverless_task_process(task_list_iterdata[0]['task'],task_list_iterdata[0]['time_per_function'])
-        activation_list = pool_client.map(serverless_task_process, task_list_iterdata)
+        pool_client.map(serverless_task_process, task_list_iterdata)
+        activation_list = pool_client.get_result()
         for j in range(len(activation_list)):
             replica_list[j].running = 0
             replicas_running -=1
             execution_time_per_function.append(activation_list[j].function_time)
+
         if use_barrier:
-            replicas_to_run=wait_barrier(activation_list, replica_list, replica_next_starting_step, 5)
+            replicas_to_run=wait_barrier(activation_list, replica_list, replica_next_starting_step)
         else:
-            replicas_to_run=wait_nobarrier(activation_list, replica_list, 5)
+            replicas_to_run=wait_nobarrier(activation_list,replica_list)
+        activation_list = []
 
 '''The barrier version where it waits for all replicas to finish a given MC step.
    Returns all the replicas that it waited for.'''
-def wait_barrier(activation_list, replica_list, monte_carlo_step, timeout):
+def wait_barrier(activation_list, replica_list, monte_carlo_step):
 
     #Stat collection variables
-    print ("wait_barrier")
+    print ("wq_wait_barrier")
     global step_time
     global num_task_resubmissions
     global total_monte_carlo_step_time
@@ -410,7 +402,7 @@ def wait_nobarrier(activation_list, replica_list):
 
             #Get potential energy value of the completed replica run.
             energies_file =  "%s/simfiles/eng/%d/%d.eng" % (protomol_utils.output_path, replica_id, replica_id)
-            energies_stream = file_utils.read_from_remote_storage(energies_file)
+            energies_stream =  storage_service.get_file(protomol_utils.remove_first_dots(energies_file))._raw_stream
             #open(energies_file, "r")
             line = energies_stream.readline()
             print (line)
@@ -512,16 +504,6 @@ def attempt_replica_exch(replica_list, replica1, replica2):
         num_replica_exchanges += 1
 
 
-#Function to create directories to hold files from the simulations.
-def make_directories(output_path, temp_list, num_replicas):
-    count = 0
-    for i in temp_list:
-        target_key = "%s/simfiles/%s/%s.%d-%d.pdb" % (output_path, i, protomol_utils.remove_trailing_dots(protomol_utils.parse_file_name(pdb_file)), count, 0)
-        file_utils.upload_to_remote_storage(pdb_file, target_key)
-
-        count += 1
-
-
 #Function to determine the replica exchange pairs that will be attempted for an
 #exchange at each MC step.
 def create_replica_exch_pairs(replica_list, num_replicas):
@@ -545,7 +527,7 @@ def create_replica_exch_pairs(replica_list, num_replicas):
         if debug_mode:
             print ("For step {}, exchange will be attempted for replica {} and {}.".format(i, replica_1, replica_2))
 
-def serverless_task_process(task, time_per_function):
+def serverless_task_process(task, protomol_file_template_key):
     # get input files
     # execute local script
     # upload result files
@@ -554,6 +536,8 @@ def serverless_task_process(task, time_per_function):
     temp_dir = task.temp_dir
     if not os.path.exists(temp_dir):
         os.mkdir(temp_dir)
+
+    protomol_file = storage_service.get_protomol_template_as_file(protomol_file_template_key)
     #exists = os.path.isfile(temp_dir + '/' +task.input_remote_execn_file)
     #if not exists:
     input_local_execn_file = protomol_utils.remove_first_dots(task.input_local_execn_file)
@@ -561,42 +545,44 @@ def serverless_task_process(task, time_per_function):
     with open(temp_dir + '/' +task.input_remote_execn_file, 'w') as localfile:
         localfile.write(task.execn_script)
     localfile.close()
-        #shutil.copyfileobj(res['Body'], localfile)
+        #shutil.copyfileobj(res['Body'], localile)
     print ("local exec file is {}, remote {}".format(input_local_execn_file, task.input_remote_execn_file))
 
     input_local_file_pdb = protomol_utils.remove_first_dots(task.input_local_file_pdb)
-    with cloud_open(input_local_file_pdb, 'rb') as f:
-        res = f.readlines()
-    file_utils.write_file_locally(temp_dir + '/' + task.input_remote_file_pdb, res)
-
+    res = storage_service.get_file(input_local_file_pdb)
+    with open(temp_dir + '/' +task.input_remote_file_pdb, 'wb') as localfile:
+        localfile.write(res)
+    localfile.close()
 
     input_par_file = protomol_utils.remove_first_dots(task.input_par_file)
-    with cloud_open(input_par_file, 'rb') as f:
-        res = f.readlines()
-    file_utils.write_file_locally(temp_dir + '/' + task.input_par_file_name, res)
+    res = storage_service.get_file(input_par_file)
+    with open(temp_dir + '/' +task.input_par_file_name, 'wb') as localfile:
+        localfile.write(res)
+    localfile.close()
 
     input_psf_file = protomol_utils.remove_first_dots(task.input_psf_file)
-    with cloud_open(input_psf_file, 'rb') as f:
-        res = f.readlines()
-    file_utils.write_file_locally(temp_dir + '/' + task.input_psf_file_name, res)
+    res = storage_service.get_file(input_psf_file)
+    with open(temp_dir + '/' +task.input_psf_file_name, 'wb') as localfile:
+        localfile.write(res)
+    localfile.close()
 
     if (task.input_local_file_velocity is not None):
         input_vel_file = protomol_utils.remove_first_dots(task.input_local_file_velocity)
         print (input_vel_file)
         print (task.input_remote_file_velocity)
-        with cloud_open(input_vel_file, 'rb') as f:
-            res = f.readlines()
-        file_utils.write_file_locally(temp_dir + '/' + task.input_remote_file_velocity, res)
+        res = storage_service.get_file(input_vel_file)
+        with open(temp_dir + '/' +task.input_remote_file_velocity, 'wb') as localfile:
+            localfile.write(res)
+        localfile.close()
 
     #bring all config files
     for conf_entry in task.input_conf_file:
+        ind = conf_entry[0]
         remote_config = protomol_utils.remove_first_dots(conf_entry[1])
         local_config = conf_entry[2]
-        with cloud_open(remote_config, 'rb') as f:
-            res = f.readlines()
-        print ("download config local {} remote {}".format(local_config, remote_config))
-        file_utils.write_file_locally(temp_dir + '/' + local_config, res)
-
+        cached = conf_entry[3]
+        with open(temp_dir + '/' + local_config, 'wb') as localfile:
+            localfile.write(protomol_file.encode())
 
     import stat
     os.chmod(temp_dir + '/' + task.input_remote_execn_file, stat.S_IRUSR |
@@ -629,26 +615,19 @@ def serverless_task_process(task, time_per_function):
     output_file_local_velocity = task.output_file_local_velocity
     #str: ww_exteq_nowater1.1-1.vel
     output_file_remote_velocity = task.output_file_remote_velocity
-    upload_to_remote_storage(temp_dir + '/' + output_file_remote_velocity, protomol_utils.remove_first_dots(output_file_local_velocity))
+    storage_service.upload_binary_file(temp_dir + '/' + output_file_remote_velocity,
+                      protomol_utils.remove_first_dots(output_file_local_velocity))
 
     #str: ./simfiles/350.0/ww_exteq_nowater1.1-1.pdb
     output_file_pdb = task.output_file_pdb
     #str: ww_exteq_nowater1.1-1.pdb
     output_file_pdb_name = task.output_file_pdb_name
-    flo = protomol_utils.remove_first_dots(output_file_pdb)
-    upload_to_remote_storage(temp_dir + '/' + output_file_pdb_name,flo)
-
+    storage_service.upload_binary_file(temp_dir + '/' + output_file_pdb_name,
+                      protomol_utils.remove_first_dots(output_file_pdb))
     task.result = 0
     time_per_function = time.time() - time_per_function
     task.specify_function_time(time_per_function)
     return task
-
-
-def upload_to_remote_storage(src, target_key):
-        copied_file = open(src, 'rb').read()
-        with cloud_open(target_key, 'wb') as targetFile:
-            targetFile.write(copied_file)
-
 
 #Main function.
 if __name__ == "__main__":
@@ -708,23 +687,16 @@ if __name__ == "__main__":
     if len(args) != 6:
         print(usage_str)
         sys.exit(1)
-    pdb_file = "./../resources/%s" % args[0]
-    psf_file = "./../resources/%s" % args[1]
-    par_file = "./../resources/%s" % args[2]
+    pdb_file = "./../resources/%s"% args[0]
+    psf_file = "./../resources/%s"% args[1]
+    par_file = "./../resources/%s"% args[2]
     min_temp = int(args[3])
     max_temp = int(args[4])
     num_replicas = int(args[5])
-    replica_list = []
-    monte_carlo_steps = protomol_utils.DEFAULT_MONTE_CARLO_STEPS
-
 
     upload_data = True
 
-    print("Clean old data from COS - start")
-    file_utils.clean_remote_storage("%s/simfiles" % (protomol_utils.output_path))
-    print("Clean previous data from COS - completed")
-
-    pool_client = Pool()
+    monte_carlo_steps = protomol_utils.DEFAULT_MONTE_CARLO_STEPS
 
     total_run_time = time.time()
     # Split up the temperature range for assigning to each replica.
@@ -757,14 +729,15 @@ if __name__ == "__main__":
 
         #Initialize list for maintaining replica exchange matrix.
         replica_temp_execution_list.append([])
+        replica_temp_execution_list[x].append(replica_list[x].temp)
 
-    #Add the initial temperature value to the replica exchange matrix.
-    for repl in range(num_replicas):
-        replica_temp_execution_list[repl].append(replica_list[repl].temp)
+
 
     #Create directories for storing data from the run.
     if upload_data:
-        make_directories(protomol_utils.output_path, temp_list, num_replicas)
+        # We upload just once the pdb_file, because hasn't sense to upload it for each temperature configuration
+        target_key = "/simfiles/%s/%s.pdb" % (protomol_utils.output_path, protomol_utils.remove_trailing_dots(protomol_utils.parse_file_name(pdb_file)))
+        storage_service.upload_binary_file(pdb_file, target_key)
 
     #Create random replica pairs to check for exchange at each step.
     create_replica_exch_pairs(replica_list, num_replicas)
@@ -772,18 +745,13 @@ if __name__ == "__main__":
     #create config files here.
     for i in range(protomol_utils.monte_carlo_steps):
         for j in range(num_replicas):
-            config_path = protomol_utils.generate_config(protomol_utils.output_path, pdb_file, psf_file, par_file, i, protomol_utils.md_steps, protomol_utils.output_freq, replica_list[j])
-            if upload_data:
-                file_utils.upload_to_remote_storage(config_path, config_path)
-
-    #upload rest of input files to COS
-
+            config_path = storage_service.save_protomol_template(protomol_utils.output_path, pdb_file, psf_file, par_file, i, protomol_utils.md_steps, protomol_utils.output_freq, replica_list[j])
     replicas_to_run = []
     for i in range(num_replicas):
         replicas_to_run.append(i)
 
 
-    cf_main(pool_client, replica_list, replicas_to_run)
+    cf_main(Pool(),replica_list, replicas_to_run)
 
     #Track total run time.
     total_run_time = (time.time() - total_run_time)
@@ -795,12 +763,13 @@ if __name__ == "__main__":
     print ("Number of failures:              {}".format(num_task_resubmissions))
     print ("Replica Exchanges:               {}".format(num_replica_exchanges))
     print ("Acceptance Rate:                 {}".format((num_replica_exchanges * 100) / protomol_utils.monte_carlo_steps))
+    print("Total functions executed :        {}".format(total_functions_executed))
 
-    averageValue = 0
-    for itr in montecarlo_return_time_list:
-        averageValue+=itr
-    averageValue = averageValue / protomol_utils.monte_carlo_steps
-    print ("Average Response Time            {}".format(averageValue))
+    total_function_time = 0
+    for value in execution_time_per_function:
+        total_function_time+=value
+
+    print("Average per function :            {}".format(total_function_time/len(execution_time_per_function)))
 
     #Write stats to a stats file
     stat_file_name = "%s/%s.stat" % (local_temp_dir, protomol_utils.remove_trailing_dots(protomol_utils.parse_file_name(pdb_file)))
@@ -823,7 +792,7 @@ if __name__ == "__main__":
             count += 1
 
     stat_file_stream.close()
-    exit_file = open('multiprocessing_storage_output.txt', 'a')
+    exit_file = open('multiprocessing_manager_output.txt', 'a')
     exit_file.write('\n')
     exit_file.write(str(num_replicas))
     exit_file.write(',')
