@@ -5,8 +5,9 @@ import redis
 configuration = {
 
 	"connector": {
-		"host": "<HOST>",
-		"port": "<PORT>"
+		"host": "redis-18591.c14.us-east-1-2.ec2.cloud.redislabs.com",
+		"port": "18591",
+		"password": "YWmzVxJd1amtkkxFJG6ArLwigSFpk9FD"
 
 	}
 }
@@ -24,9 +25,9 @@ class RedisConnector:
    def __init__(self):
        host = configuration["connector"]["host"]
        port = configuration["connector"]["port"]
-       #password = configuration["connector"]["password"]
+       password = configuration["connector"]["password"]
        #db = configuration["connector"]["db"]
-       RedisConnector.__instance = redis.Redis(host=host, port=port)
+       RedisConnector.__instance = redis.Redis(host=host, port=port,password=password)
 
 s = RedisConnector()
 

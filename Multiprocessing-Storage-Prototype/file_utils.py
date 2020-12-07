@@ -1,7 +1,6 @@
 import logging
-import cloudbutton.cloud_proxy as proxy
-from cloudbutton.cloud_proxy import os as cloud_os
-from cloudbutton.cloud_proxy import open as cloud_open
+from lithops.storage.cloud_proxy import os as cloud_os
+from lithops.storage.cloud_proxy import open as cloud_open
 
 logger = logging.getLogger('pywren-protomol')
 
@@ -33,8 +32,3 @@ def clean_remote_storage(prefix):
             cloud_os.remove(cloud_os.path.join(root, name))
         for name in dirs:
             clean_remote_storage(cloud_os.path.join(root, name))
-
-
-
-
-

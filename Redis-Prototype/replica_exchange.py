@@ -232,7 +232,7 @@ def cf_main(replica_list, replicas_to_run):
 
     while num_replicas_completed < len(replica_list):
 
-        pw = lithops.ibm_cf_executor(runtime='cactusone/pywren-protomol:3.6.14', runtime_memory=2048)
+        pw = lithops.FunctionExecutor()
 
         print ("num_replicas_completed: {}".format(num_replicas_completed))
         print ("len(replica_list): {}".format(len(replica_list)))
@@ -386,14 +386,14 @@ def wait_nobarrier(activation_list, replica_list):
     global replicas_running
 
     #Wait for a pywren_task to finish execution.
-    print ("wq_wait_nobarrier {}".format(len(activation_list)))
+    print ("wait_nobarrier {}".format(len(activation_list)))
     for task in activation_list:
         #pywren_task = res.get_result()
-        print ("wq_wait_nobarrier. got task {}".format(task.task_str))
+        print ("wait_nobarrier. got task {}".format(task.task_str))
         if (task):
             #Get replica id from finished pywren_task.
             replica_id = int(task.tag)
-            print ("wq_wait_nobarrier. task id {}".format(replica_id))
+            print ("wait_nobarrier. task id {}".format(replica_id))
 
             #Check if pywren_task (replica) failed. If so, resubmit.
             if task.result != 0:
@@ -704,10 +704,6 @@ if __name__ == "__main__":
     num_replicas = int(args[5])
 
     upload_data = True
-    os.environ['LITHOPS_CONFIG_FILE'] = './../resources/lithops_config.yml'
-
-    with open(os.environ['LITHOPS_CONFIG_FILE']) as file:
-        input_config = yaml.full_load(file)
 
     storage_service.clear_db()
 

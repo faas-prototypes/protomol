@@ -1,4 +1,4 @@
 redis==3.4.1
 ibm-cos-sdk==2.6.0
-lithops==2.0.0
+git+git://github.com/lithops-cloud/lithops.git
 git+git://github.com/cloudbutton/cloudbutton.git
