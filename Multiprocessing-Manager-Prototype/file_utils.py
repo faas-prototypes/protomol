@@ -1,6 +1,6 @@
 import logging
-from cloudbutton.cloud_proxy import os as cloud_os
-from cloudbutton.cloud_proxy import open as cloud_open
+from lithops.storage.cloud_proxy import os as cloud_os
+from lithops.storage.cloud_proxy import open as cloud_open
 
 logger = logging.getLogger('pywren-protomol')
 

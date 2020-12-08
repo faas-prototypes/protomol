@@ -6,7 +6,7 @@ import time
 import math
 import random
 import sys
-from cloudbutton.multiprocessing import Pool, Manager
+from lithops.multiprocessing import Pool, Manager
 import os
 import logging
 import getopt
@@ -249,7 +249,6 @@ def cf_main(pool_client, shared_map,replica_list, replicas_to_run):
         #         computation for the current monte carlo step.
         activation_list = []
         task_list_iterdata = []
-        processes_list = []
         for j in replicas_to_run:
             if not replica_list[j].running:
                 #Initialize step time.
@@ -310,7 +309,7 @@ def cf_main(pool_client, shared_map,replica_list, replicas_to_run):
         #Wait for tasks to complete.
         total_functions_executed+=len(task_list_iterdata)
         #serverless_task_process(task_list_iterdata[0]['task'],task_list_iterdata[0]['time_per_function'])
-        activation_list = pool_client.starmap(serverless_task_process, task_list_iterdata)
+        activation_list = pool_client.map(serverless_task_process, task_list_iterdata)
         for j in range(len(activation_list)):
             replica_list[j].running = 0
             replicas_running -=1
